@@ -1,0 +1,75 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0302 
+header_name {.h} 
+code_name {.cxx}
+Function {} {open
+} {
+  Fl_Window mainwin {
+    label {Brauautomat GUI v0.0.1} open selected
+    xywh {332 218 670 620} type Double visible
+  } {
+    Fl_Table temp_profile {
+      label test open
+      xywh {35 250 605 330}
+    } {}
+    Fl_Button {} {
+      label Upload
+      xywh {555 70 85 25}
+    }
+    Fl_Group {} {
+      label Modus open
+      xywh {25 40 450 145} box UP_BOX align 5
+    } {
+      Fl_Light_Button {} {
+        label Manuell
+        xywh {40 55 105 30}
+      }
+      Fl_Light_Button {} {
+        label Automatik
+        xywh {40 95 105 30}
+      }
+      Fl_Light_Button {} {
+        label Pause
+        xywh {40 135 105 30}
+      }
+      Fl_Value_Slider sl_temperatur {
+        label Temperatur
+        xywh {220 75 225 25} type {Horz Knob} align 5 maximum 100 step 0.5 value 20
+      }
+      Fl_Value_Slider sl_speed {
+        label Drehzahl
+        xywh {220 125 225 25} type {Horz Knob} align 5 minimum -100 maximum 100 step 0.5
+      }
+    }
+    Fl_Button {} {
+      label Download
+      xywh {555 100 85 25}
+    }
+    Fl_Button {} {
+      label test
+      callback {temp_profile->rows(5);
+temp_profile->cols(5);
+
+    temp_profile->selection_color(FL_YELLOW);
+    temp_profile->when(FL_WHEN_RELEASE|FL_WHEN_CHANGED);
+    temp_profile->table_box(FL_NO_BOX);
+    temp_profile->col_resize_min(4);
+    temp_profile->row_resize_min(4);
+
+    // ROWS
+    temp_profile->row_header(1);
+    temp_profile->row_header_width(60);
+    temp_profile->row_resize(1);
+    temp_profile->rows(500);
+    temp_profile->row_height_all(20);
+
+    // COLS
+    temp_profile->cols(500);
+    temp_profile->col_header(1);
+    temp_profile->col_header_height(25);
+    temp_profile->col_resize(1);
+    temp_profile->col_width_all(80);}
+      xywh {555 155 95 25}
+    }
+  }
+} 
