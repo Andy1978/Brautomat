@@ -1,1 +1,6 @@
-02.02.2013 hier entsteht die AVR firmware
+*** Brautomat ***
+
+Andreas Weber:
+Firmware für den Atmega32 mit MKBoard.
+Ich verwende vorerst bei Board mit der HardwareRev1
+
