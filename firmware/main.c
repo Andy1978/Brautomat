@@ -24,6 +24,49 @@
 #include <util/delay.h>
 #include "lcd.h"
 
+struct s_status
+{
+    uint16_t temperature; //ToDo: skalierung einfügen
+    uint8_t	 enable;
+};
+
+struct s_setvalues
+{
+    uint16_t temperature_set_point;
+    uint16_t amplitude_set_point;
+    uint16_t period_set_point;
+    uint8_t	 enable;
+};
+
+volatile struct s_status status;
+volatile struct s_setvalues setvalues;
+
+uint8_t uart_error;
+
+#define UART_BAUD_RATE 57600
+
+//  Integer (Basis 10) rechtsbündig auf LCD ausgeben.
+
+void lcd_put_int(int16_t val, uint8_t len)
+{
+	char buffer[len+1];
+	itoa(val,buffer,10);
+	size_t empty=len-strlen(buffer);
+	while(empty--)
+		lcd_putc(' ');
+	lcd_puts(buffer);
+}
+
+void lcd_put_int32(int32_t val, uint8_t len)
+{
+	char buffer[len+1];
+	ltoa(val,buffer,10);
+	size_t empty=len-strlen(buffer);
+	while(empty--)
+		lcd_putc(' ');
+	lcd_puts(buffer);
+}
+
 ISR(TIMER0_COMP_vect) //1kHz
 {
     static uint8_t disp_cnt=0;
@@ -58,8 +101,37 @@ ISR(ADC_vect)
 	OCR1B=512+sin_list[(uint8_t)i];
 */	
 }
+
+// UART bearbeiten. Es gibt nur ein Telegramm mit allen Sollwerten
+// und eine Antwort mit allen Istwerten bzw. Status
+void processUART(void)
+{
+	//Alle Daten empfangen	
+	//momentan keine Fehlerbehandlung
+	if(uart_GetRXCount()>=sizeof(struct s_setvalues))
+	{
+		//Empfangen
+		char* rec=(char*)&setvalues;
+		uint8_t i;
+		for(i=0;i<sizeof(struct s_setvalues);i++)
+		{
+			rec[i]=uart_getc() & 0xFF;
+		}
+	
+		status.enable |= setvalues.enable;
+		//Senden
+		char* send=(char*)&status;
+		for(i=0;i<sizeof(struct s_status);i++)
+		{
+			uart_putc(send[i]);	
+		}
+	}
+}
+
 int main(void)
 {
+	uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(UART_BAUD_RATE,F_CPU));
+
     lcd_init(LCD_DISP_ON);
     lcd_clrscr();
     lcd_puts_P("Brautomat 0.1\n");
@@ -98,7 +170,7 @@ int main(void)
 	
     for (;;)    /* main event loop */
     {
-      //do nothing
+      processUART();
     }
     return 0;
 }
