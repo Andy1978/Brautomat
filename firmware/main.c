@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
@@ -40,16 +41,26 @@
 
 struct s_status
 {
-    uint16_t temperature; //ToDo: skalierung einfügen
-    uint8_t	 enable;
+    float temperature;            //Isttemperatur [°C]
+    uint8_t aktive_step;          //aktueller Schritt im Ablauf
+    uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
+    uint8_t	 bits;
+    //Bit 0 H: Heizung aktiv
 };
 
 struct s_setvalues
 {
-    uint16_t temperature_set_point;
-    uint16_t amplitude_set_point;
-    uint16_t period_set_point;
-    uint8_t	 enable;
+    float temperature_set_point;  //Solltemperatur [°C]
+    uint8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
+    uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
+    float step_temp[5];           //Temperatur in der Schrittkette
+    uint16_t step_time[5];        //Dauer Schritt
+    uint8_t	 bits;
+    //Bit 0 A: Temperaturregelung aktiv (Handbetrieb wenn nicht)
+    //Bit 1 M: Heizung aktiv im Handbetrieb
+    //Bit 2 S: Temperatursollwerte aus Schrittkette
+    //Bit 3: Schritt weiter (Flanke)
+    //Bit 4: Schritt zurück (Flanke)
 };
 
 volatile struct s_status status;
@@ -80,46 +91,41 @@ void lcd_put_int32(int32_t val, uint8_t len)
 	lcd_puts(buffer);
 }
 
-void update_lcd()
+void update_lcd(void)
 {
-  static float soll=98.7234;
-  static float ist=76.54321;
   char buf[20];
 
   //Solltemperatur
   lcd_gotoxy(0,0);
-  _delay_ms(2);   //sonst zicks gotoxy rum, TODO: nachprüfen, ggf. Zeit verkleinern
-  lcd_puts_P("Soll:");
-  dtostrf(soll,4,1,buf);
+  _delay_ms(2);   //sonst zickt gotoxy rum, TODO: nachprüfen, ggf. Zeit verkleinern
+  lcd_puts_P("S");
+  dtostrf(setvalues.temperature_set_point,4,1,buf);
+  lcd_puts(buf);
+  lcd_putc(0xDF);
+  lcd_putc('C');
+
+  //Isttemperatur
+  //lcd_gotoxy(0,1);
+  lcd_puts_P("  I");
+  dtostrf(status.temperature,4,1,buf);
   lcd_puts(buf);
   lcd_putc(0xDF);
   lcd_putc('C');
 
   //Status
-  lcd_putc(' ');
-  status.enable=0xFF;
-  lcd_putc((status.enable & _BV(0))? 'R':' ');
-  lcd_putc((status.enable & _BV(1))? 'H':' ');
-  lcd_putc((status.enable & _BV(2))? 'M':' ');
-  lcd_putc((status.enable & _BV(3))? 'D':' ');
+  lcd_putc((setvalues.bits & _BV(0))? 'A':' ');
+  lcd_putc((setvalues.bits & _BV(1))? 'M':' ');
+  lcd_putc((setvalues.bits & _BV(2))? 'S':' ');
+  lcd_putc((status.bits & _BV(0))? 'H':' ');
 
-  //Isttemperatur
-  //lcd_gotoxy(0,1);
-  lcd_puts_P("Ist :");
-  dtostrf(ist,4,1,buf);
+  //aktiver Schritt
+  lcd_puts_P(" S:");
+  itoa(status.aktive_step,buf,10);
   lcd_puts(buf);
-  lcd_putc(0xDF);
-  lcd_putc('C');
-
   
-  //  	ltoa(ADC,buf,10);
-  //  	lcd_puts(buf);
-  //  	lcd_puts_P("    ");
-  soll+=0.1;
-  ist+=0.1;
-  if(soll>100.0) soll=50;
-  if(ist>100.0) ist=50;
-  
+  //verbleibende Zeit im Schritt in Sekunden
+  sprintf(buf," Z:%5i",status.remaining_step_time);
+  lcd_puts(buf);
 }
 
 
@@ -135,14 +141,13 @@ int8_t sin_list[]={0,24,48,70,89,105,117,124,127,124,117,105,89,70,48,24,0,-24,-
 
 ISR(ADC_vect) 
 {
-	//uint16_t temp=ADC;
-	//OCR1A=temp;
-	//OCR1B=1023-temp;
-	
+  //Isttemperatur mal über Poti  
+  status.temperature=ADC/1024.0*100;
+  
 	int16_t temp=ADC-512;
 	OCR1A=512-temp;
 	OCR1B=512+temp;
-	
+
 /*
 	static float i=0;
 	i+=ADC/50000.0;
@@ -168,7 +173,7 @@ void processUART(void)
 			rec[i]=uart_getc() & 0xFF;
 		}
 	
-		status.enable |= setvalues.enable;
+		//status.bits |= setvalues.bits;
 		//Senden
 		char* send=(char*)&status;
 		for(i=0;i<sizeof(struct s_status);i++)

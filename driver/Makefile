@@ -6,7 +6,7 @@ CC_FLAGS := -Wall -Wextra -ggdb -O0
 brautomat_driver_test: brautomat_driver_test.o cBrautomat.o serial.o
 	g++ $(CC_FLAGS) -o brautomat_driver_test brautomat_driver_test.o cBrautomat.o serial.o
 
-%.o: %.cpp
+%.o: %.cpp %.h
 	g++ $(CC_FLAGS) -c -o $@ $<
 
 

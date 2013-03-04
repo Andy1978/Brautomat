@@ -9,19 +9,6 @@ cBrautomat::cBrautomat(const char* device)
   //_set_servos(0,0);
 }
 
-void cBrautomat::temperature_set_point(double t)
-{
-  //TODO: ggf. auf 100°C begrenzen?
-
-  //TODO: Skalierung...
-  setvalues.temperature_set_point= 4321;
-
-  //setvalues.enable |= 0x03;		//PWM Freigabe für beide Servos
-  //update();
-  //setvalues.enable &= 0xFC;
-  //update();
-}
-
 void cBrautomat::update()
 {
   int ret=serial.sendData((char*)&setvalues, sizeof(s_setvalues));
@@ -36,14 +23,29 @@ void cBrautomat::update()
 void cBrautomat::print_setvalues()
 {
     std::cout << "Solltemperatur           = " << setvalues.temperature_set_point << std::endl;
-    std::cout << "Sollamplitude            = " << setvalues.amplitude_set_point << std::endl;
-    std::cout << "Sollperiodendauer        = " << setvalues.period_set_point << std::endl;
-    std::cout << "Temperaturregelung aktiv = " << bool(setvalues.enable & 0x01) << std::endl;
+    std::cout << "Sollamplitude            = " << int(setvalues.amplitude_set_point) << std::endl;
+    std::cout << "Sollperiodendauer        = " << int(setvalues.period_set_point) << std::endl;
+    std::cout << "Temperaturregelung aktiv             = " << bool(setvalues.bits & 0x01) << std::endl;
+    std::cout << "Heizung aktiv im Handbetrieb         = " << bool(setvalues.bits & 0x02) << std::endl;
+    std::cout << "Temperatursollwerte aus Schrittkette = " << bool(setvalues.bits & 0x04) << std::endl;
+    print_steps();
 }
 
 void cBrautomat::print_status()
 {
-    std::cout << "Isttemperatur = " << status.temperature << std::endl;
+    std::cout << "Isttemperatur     = " << status.temperature << std::endl;
+    std::cout << "aktiver Schritt   = " << int(status.aktive_step) << std::endl;
+    std::cout << "verbleibende Zeit = " << int(status.remaining_step_time) << std::endl;
+    std::cout << "Heizung aktiv = " << bool(status.bits & 0x01) << std::endl;
+}
+
+void cBrautomat::print_steps()
+{
+    for(int i=0;i<5;i++)
+    {
+      std::cout << "Schritt:" << i << " Solltemp. = " << setvalues.step_temp[i];
+      std::cout << ", Schrittdauer = " << setvalues.step_time[i] << "s" << std::endl;
+    }
 }
 
 /*
