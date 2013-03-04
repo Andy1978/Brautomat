@@ -3,3 +3,16 @@
 Bitte keine Dokumente hinzufügen, für die wir nicht die Rechte haben. Bitte nur verlinken
 
 Atmega32 Datenblatt: www.atmel.com/Images/doc2503.pdf
+
+PT100 Diskussionen
+http://www.mikrocontroller.net/topic/183991 (dort von MaWin)
+http://groups.google.de/group/de.sci.electronics/browse_thread/thread/6f4a76565e833cb4/6aa603074f212afd?hl=de&q=group%3Ade.sci.electronics+k%C3%B6hn&lnk=ol&#
+
+Nur ganz grobe Werte. (später über Polynom berechnen)
+0°C   100R
+20°C  108R
+100°C 138R
+
+Application Notes:
+Precision RTD Instrumentation for Temperature Sensing http://ww1.microchip.com/downloads/en/AppNotes/01154a.pdf ***
+Precision Temperature Sensing With RTD Circuits (AN687) ww1.microchip.com/downloads/en/appnotes/00687c.pdf
