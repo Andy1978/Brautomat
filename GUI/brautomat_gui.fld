@@ -6,44 +6,52 @@ Function {} {open
 } {
   Fl_Window mainwin {
     label {Brauautomat GUI v0.0.1} open selected
-    xywh {332 218 670 620} type Double visible
+    xywh {799 125 870 850} type Double resizable visible
   } {
-    Fl_Table temp_profile {
-      label test open
-      xywh {35 250 605 330}
-    } {}
     Fl_Button {} {
       label Upload
-      xywh {555 70 85 25}
+      xywh {445 205 85 25} type Normal box UP_BOX selection_color 49 align 0
     }
     Fl_Group {} {
-      label Modus open
-      xywh {25 40 450 145} box UP_BOX align 5
+      label {Rührwerk} open
+      xywh {10 180 385 175} box GTK_UP_BOX align 5
     } {
       Fl_Light_Button {} {
-        label Manuell
-        xywh {40 55 105 30}
+        label Hand
+        xywh {25 195 100 30}
       }
       Fl_Light_Button {} {
-        label Automatik
-        xywh {40 95 105 30}
+        label {Auto Sinus}
+        xywh {25 295 100 30}
+      }
+      Fl_Value_Slider sl_amplitude {
+        label Amplitude
+        xywh {155 250 225 25} type {Horz Knob} align 5 step 0.1 value 0.5
+      }
+      Fl_Button {} {
+        label Ein
+        xywh {155 195 40 30} type Normal box UP_BOX selection_color 49 align 0
+      }
+      Fl_Button {} {
+        label Aus
+        xywh {200 195 40 30} type Normal box UP_BOX selection_color 49 align 0
+      }
+      Fl_Value_Slider sl_periodendauer {
+        label Periodendauer
+        xywh {155 295 225 25} type {Horz Knob} align 5 minimum 1 maximum 5 step 0.2 value 2
+      }
+      Fl_Check_Button {} {
+        label {Sollwerte aus Schrittkette}
+        xywh {155 321 230 29} down_box DOWN_BOX
       }
       Fl_Light_Button {} {
-        label Pause
-        xywh {40 135 105 30}
-      }
-      Fl_Value_Slider sl_temperatur {
-        label Temperatur
-        xywh {220 75 225 25} type {Horz Knob} align 5 maximum 100 step 0.5 value 20
-      }
-      Fl_Value_Slider sl_speed {
-        label Drehzahl
-        xywh {220 125 225 25} type {Horz Knob} align 5 minimum -100 maximum 100 step 0.5
+        label {Auto const.}
+        xywh {25 245 100 30}
       }
     }
     Fl_Button {} {
       label Download
-      xywh {555 100 85 25}
+      xywh {445 235 85 25} type Normal box UP_BOX selection_color 49 align 0
     }
     Fl_Button {} {
       label test
@@ -69,7 +77,78 @@ temp_profile->cols(5);
     temp_profile->col_header_height(25);
     temp_profile->col_resize(1);
     temp_profile->col_width_all(80);}
-      xywh {555 155 95 25}
+      xywh {445 290 95 25} type Normal box UP_BOX selection_color 49 align 0
+    }
+    Fl_Group {} {
+      label {Heizung Sollwerte und Steuerung} open
+      xywh {10 25 385 130} box GTK_UP_BOX align 5
+    } {
+      Fl_Light_Button {} {
+        label Hand
+        xywh {20 40 65 30} type Radio
+      }
+      Fl_Light_Button {} {
+        label Auto
+        xywh {20 90 65 30} type Radio
+      }
+      Fl_Button {} {
+        label Ein
+        xywh {155 40 40 30} type Normal box UP_BOX selection_color 49 align 0
+      }
+      Fl_Button {} {
+        label Aus
+        xywh {200 40 40 30} type Normal box UP_BOX selection_color 49 align 0
+      }
+      Fl_Value_Slider sl_temperatur {
+        label Solltemperatur
+        xywh {155 95 225 25} type {Horz Knob} align 5 maximum 100 step 0.5 value 20
+      }
+      Fl_Check_Button {} {
+        label {Sollwert aus Schrittkette}
+        xywh {155 126 230 24} down_box DOWN_BOX
+      }
+    }
+    Fl_Group {} {
+      label {Heizung Istwerte} open
+      xywh {405 25 185 130} box GTK_UP_BOX align 5
+    } {
+      Fl_Light_Button {} {
+        label {Heizung aktiv}
+        xywh {425 110 150 30}
+      }
+      Fl_Value_Output {} {
+        label {Temperatur [°C]}
+        xywh {535 35 40 30} maximum 100 step 0.1 value 20
+      }
+      Fl_Value_Output {} {
+        label {Sollwert [°C]}
+        xywh {535 70 40 30} maximum 100 step 0.1 value 20
+      }
+    }
+    Fl_Group {} {
+      label Schritte open
+      xywh {10 395 640 415} box GTK_UP_BOX align 5
+    } {
+      Fl_Table temp_profile {
+        label test open
+        xywh {30 500 575 285}
+      } {}
+      Fl_Value_Output {} {
+        label {aktiver Schritt}
+        xywh {125 410 25 25}
+      }
+      Fl_Value_Output {} {
+        label {verbleibende Zeit im Schritt}
+        xywh {220 445 25 25}
+      }
+      Fl_Button {} {
+        label {Schritt vor}
+        xywh {310 410 130 30} type Normal box UP_BOX selection_color 49 align 0
+      }
+      Fl_Button {} {
+        label {Schritt zurück}
+        xywh {310 445 130 30} type Normal box UP_BOX selection_color 49 align 0
+      }
     }
   }
 } 
