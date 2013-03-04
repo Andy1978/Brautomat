@@ -1,8 +1,8 @@
 .PHONY = clean
 
-gui: gui.fld
-	fluid -c gui.fld
-	fltk-config --compile gui.cxx
+brautomat_gui: brautomat_gui.fld
+	fluid -c $<
+	fltk-config --compile brautomat_gui.cxx
 
 clean:
-	rm -f gui gui.cxx gui.h
+	rm -f brautomat_gui brautomat_gui.cxx brautomat_gui.h
