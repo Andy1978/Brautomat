@@ -16,3 +16,6 @@ Nur ganz grobe Werte. (später über Polynom berechnen)
 Application Notes:
 Precision RTD Instrumentation for Temperature Sensing http://ww1.microchip.com/downloads/en/AppNotes/01154a.pdf ***
 Precision Temperature Sensing With RTD Circuits (AN687) ww1.microchip.com/downloads/en/appnotes/00687c.pdf
+
+Für den DS18X20:
+http://gandalf.arubi.uni-kl.de/avr_projects/tempsensor/
