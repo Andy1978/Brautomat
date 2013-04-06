@@ -1,24 +1,24 @@
 /*************************************************
 
-	Brautomat
+  Brautomat
 
-	Autor: Andreas Weber 
-	src: https://github.com/Andy1978/Brautomat
-	changelog: 02.03.2013 angelegt
-		   06.04.2013 aw: PT100 nun über H-Brücke differentiell einlesen	
+  Autor: Andreas Weber 
+  src: https://github.com/Andy1978/Brautomat
+  changelog: 02.03.2013 angelegt
+       06.04.2013 aw: PT100 nun über H-Brücke differentiell einlesen  
 
-	Infos:	
-	H-Brücken PWM Treiber IR2104
-	IN obere Halbbrücke PD4, OC1B
-	/SD obere Halbbrücke PD6
-	IN untere Halbbrücke PD5, OC1A
-	/SD untere Halbbrücke PD7
+  Infos:  
+  H-Brücken PWM Treiber IR2104
+  IN obere Halbbrücke PD4, OC1B
+  /SD obere Halbbrücke PD6
+  IN untere Halbbrücke PD5, OC1A
+  /SD untere Halbbrücke PD7
    
   Relais für Heizung: PB3
 
   PT100: differentiell Wheatstone bridge
-	PDA0 : Spannungsteiler 6,8k, 100R von AREF (intern 2.56V bandgap)
-	PDA1 : 6,8k, PT100 von AREF
+  PDA0 : Spannungsteiler 6,8k, 100R von AREF (intern 2.56V bandgap)
+  PDA1 : 6,8k, PT100 von AREF
 
   Dallas DS18xxx an PA6, externe Versorgung 4,7k Pull-Up
 
@@ -47,92 +47,58 @@
 
 struct s_status
 {
-    float temperature;            //Isttemperatur [°C]
-    uint8_t aktive_step;          //aktueller Schritt im Ablauf
-    uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
-    uint8_t	 bits;
-    //Bit 0 H: Heizung aktiv
+  float temperature;            //Isttemperatur [°C]
+  uint8_t aktive_step;          //aktueller Schritt im Ablauf
+  uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
+  uint8_t  bits;
+  //Bit 0 H: Heizung aktiv
 };
 
 struct s_setvalues
 {
-    float temperature_set_point;  //Solltemperatur [°C]
-    uint8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
-    uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
-    float step_temp[5];           //Temperatur in der Schrittkette
-    uint16_t step_time[5];        //Dauer Schritt
-    uint8_t	 bits;
-    //Bit 0 A: Temperaturregelung aktiv (Handbetrieb wenn nicht)
-    //Bit 1 M: Heizung aktiv im Handbetrieb
-    //Bit 2 S: Temperatursollwerte aus Schrittkette
-    //Bit 3: Schritt weiter (Flanke)
-    //Bit 4: Schritt zurück (Flanke)
+  float temperature_set_point;  //Solltemperatur [°C]
+  uint8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
+  uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
+  float step_temp[5];           //Temperatur in der Schrittkette
+  uint16_t step_time[5];        //Dauer Schritt
+  uint8_t  bits;
+  //Bit 0 A: Temperaturregelung aktiv (Handbetrieb wenn nicht)
+  //Bit 1 M: Heizung aktiv im Handbetrieb
+  //Bit 2 S: Temperatursollwerte aus Schrittkette
+  //Bit 3: Schritt weiter (Flanke)
+  //Bit 4: Schritt zurück (Flanke)
 };
 
 #define UART_BAUD_RATE 57600
 #define MAXSENSORS 5
 #define NEWLINESTR "\r\n"
+#define OW_ONE_BUS
 
 volatile struct s_status status;
 volatile struct s_setvalues setvalues;
 
 uint8_t uart_error;
-uint8_t gSensorIDs[MAXSENSORS][OW_ROMCODE_SIZE];
-
-static uint8_t search_sensors(void)
-{
-	uint8_t i;
-	uint8_t id[OW_ROMCODE_SIZE];
-	uint8_t diff, nSensors;
-	
-	uart_puts_P( NEWLINESTR "Scanning Bus for DS18X20" NEWLINESTR );
-	
-	ow_reset();
-
-	nSensors = 0;
-	
-	diff = OW_SEARCH_FIRST;
-	while ( diff != OW_LAST_DEVICE && nSensors < MAXSENSORS ) {
-		DS18X20_find_sensor( &diff, &id[0] );
-		
-		if( diff == OW_PRESENCE_ERR ) {
-			uart_puts_P( "No Sensor found" NEWLINESTR );
-			break;
-		}
-		
-		if( diff == OW_DATA_ERR ) {
-			uart_puts_P( "Bus Error" NEWLINESTR );
-			break;
-		}
-		
-		for ( i=0; i < OW_ROMCODE_SIZE; i++ )
-			gSensorIDs[nSensors][i] = id[i];
-		
-		nSensors++;
-	}
-	
-	return nSensors;
-}
+uint8_t gSensorID[OW_ROMCODE_SIZE]={ 0x5A, 0xF2, 0xBD, 0x04};
 
 //  Integer (Basis 10) rechtsbündig auf LCD ausgeben.
 void lcd_put_int(int16_t val, uint8_t len)
 {
-	char buffer[len+1];
-	itoa(val,buffer,10);
-	size_t empty=len-strlen(buffer);
-	while(empty--)
-		lcd_putc(' ');
-	lcd_puts(buffer);
+  char buffer[len+1];
+  itoa(val,buffer,10);
+  size_t empty=len-strlen(buffer);
+  while(empty--)
+    lcd_putc(' ');
+  lcd_puts(buffer);
 }
 
 void lcd_put_int32(int32_t val, uint8_t len)
 {
-	char buffer[len+1];
-	ltoa(val,buffer,10);
-	size_t empty=len-strlen(buffer);
-	while(empty--)
-		lcd_putc(' ');
-	lcd_puts(buffer);
+  char buffer[len+1];
+  ltoa(val,buffer,10);
+  size_t empty=len-strlen(buffer);
+  while(empty--)
+    lcd_putc(' ');
+  lcd_puts(buffer);
 }
 
 void update_lcd(void)
@@ -180,7 +146,16 @@ void update_lcd(void)
   _delay_ms(2);
   //itoa(tmp,buf,10);
   lcd_puts(buf);
-  lcd_puts("      ");
+  lcd_puts(" ");
+
+  uint8_t i = gSensorID[0]; // family-code for conversion-routine
+  int16_t decicelsius;
+  DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL );
+  _delay_ms( DS18B20_TCONV_12BIT );
+  DS18X20_read_decicelsius_single( i, &decicelsius );
+  DS18X20_format_from_decicelsius( decicelsius, buf, 10 );
+  lcd_puts(buf);
+  lcd_puts("    ");
 }
 
 
@@ -204,41 +179,41 @@ ISR(ADC_vect)
 
   int16_t tmp=ADC;
   if(tmp>511) tmp = tmp-1024;
-  status.temperature=tmp/10.0; 		  	
+  status.temperature=tmp/10.0;        
 
 /*
-	static float i=0;
-	i+=ADC/50000.0;
-	if (i>32) i-=32;
-	OCR1A=512-sin_list[(uint8_t)i];
-	OCR1B=512+sin_list[(uint8_t)i];
-*/	
+  static float i=0;
+  i+=ADC/50000.0;
+  if (i>32) i-=32;
+  OCR1A=512-sin_list[(uint8_t)i];
+  OCR1B=512+sin_list[(uint8_t)i];
+*/  
 }
 
 // UART bearbeiten. Es gibt nur ein Telegramm mit allen Sollwerten
 // und eine Antwort mit allen Istwerten bzw. Status
 void processUART(void)
 {
-	//Alle Daten empfangen
-	//momentan keine Fehlerbehandlung
-	if(uart_GetRXCount()>=sizeof(struct s_setvalues))
-	{
-		//Empfangen
-		char* rec=(char*)&setvalues;
-		uint8_t i;
-		for(i=0;i<sizeof(struct s_setvalues);i++)
-		{
-			rec[i]=uart_getc() & 0xFF;
-		}
-	
-		//status.bits |= setvalues.bits;
-		//Senden
-		char* send=(char*)&status;
-		for(i=0;i<sizeof(struct s_status);i++)
-		{
-			uart_putc(send[i]);	
-		}
-	}
+  //Alle Daten empfangen
+  //momentan keine Fehlerbehandlung
+  if(uart_GetRXCount()>=sizeof(struct s_setvalues))
+  {
+    //Empfangen
+    char* rec=(char*)&setvalues;
+    uint8_t i;
+    for(i=0;i<sizeof(struct s_setvalues);i++)
+    {
+      rec[i]=uart_getc() & 0xFF;
+    }
+  
+    //status.bits |= setvalues.bits;
+    //Senden
+    char* send=(char*)&status;
+    for(i=0;i<sizeof(struct s_status);i++)
+    {
+      uart_putc(send[i]); 
+    }
+  }
 }
 
 int main(void)
@@ -261,39 +236,42 @@ int main(void)
   DDRB |= _BV(PB3);
   PORTD |= _BV(PD6) | _BV(PD7);
     
-	/*** TIMER0 ***/
-	OCR0=250;
-	//CTC = Clear Timer on Compare match S.80
-	//Normal port operation, OC0 disconnected
-	//Prescaler=64 -> clk=250kHz
-	TCCR0 = _BV(WGM01) | _BV(CS01) | _BV(CS00); 
-	//On Compare match Interrupt Enable for timer 0
-	TIMSK |= _BV(OCIE0);
+  /*** TIMER0 ***/
+  OCR0=250;
+  //CTC = Clear Timer on Compare match S.80
+  //Normal port operation, OC0 disconnected
+  //Prescaler=64 -> clk=250kHz
+  TCCR0 = _BV(WGM01) | _BV(CS01) | _BV(CS00); 
+  //On Compare match Interrupt Enable for timer 0
+  TIMSK |= _BV(OCIE0);
 
-	/** TIMER1 **/
-	//PWM Phase correct 10bit
-	//Set OC1A+OC1B on match when upcounting (page 108)
-	TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(COM1A0) | _BV(COM1B0) | _BV(WGM11) | _BV(WGM10);
-	//Prescaler = 1 (page 110)
-	TCCR1B = _BV(CS10);
-	
+  /** TIMER1 **/
+  //PWM Phase correct 10bit
+  //Set OC1A+OC1B on match when upcounting (page 108)
+  TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(COM1A0) | _BV(COM1B0) | _BV(WGM11) | _BV(WGM10);
+  //Prescaler = 1 (page 110)
+  TCCR1B = _BV(CS10);
 
-	/*** ADC ***/
-	//Prescaler 64 = 250Khz ADC Clock, AutoTrigger, Interrupts enable
-	ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC) | _BV(ADIE); 
-	//AVCC with external capacitor at AREF pin als Reference verwenden
-	//siehe S. 215
-	//8=Multiplexer ADC0 positive Input, ADC0 negative, 10x gain
-	//9=Multiplexer ADC1 positive Input, ADC0 negative, 10x gain
 
-	//Channel 9 
-	ADMUX = _BV(REFS1) | _BV(REFS0) | 11; 	
-	//ADC in Free Running mode
-	SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0));	
+  /*** ADC ***/
+  //Prescaler 64 = 250Khz ADC Clock, AutoTrigger, Interrupts enable
+  ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC) | _BV(ADIE); 
+  //AVCC with external capacitor at AREF pin als Reference verwenden
+  //siehe S. 215
+  //8=Multiplexer ADC0 positive Input, ADC0 negative, 10x gain
+  //9=Multiplexer ADC1 positive Input, ADC0 negative, 10x gain
 
-	//enable global interrupts
-    sei();			
-	
+  //Channel 9 
+  ADMUX = _BV(REFS1) | _BV(REFS0) | 11;   
+  //ADC in Free Running mode
+  SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0)); 
+
+  //DS18B20
+  ow_set_bus(&PINA,&PORTA,&DDRA,PA6);
+
+  //enable global interrupts
+    sei();      
+  
     for (;;)    /* main event loop */
     {
       processUART();

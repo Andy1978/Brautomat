@@ -1,0 +1,49 @@
+
+DS18X20 1-Wire-Reader Demo by Martin Thomas
+-------------------------------------------
+Scanning Bus for DS18X20
+1 DS18X20 Sensor(s) available:
+# in Bus :1 : FC:28 (18B)SN: 5A F2 BD 04 00 00 CRC:48  CRC O.K. 
+Sensor# 1 is a DS18B20 which is externally powered
+
+DS18x20 EEPROM support test for first sensor
+TH/TL in scratchpad of sensor 1 now : 80 / 75
+TH+1 and TL+1 written to scratchpad
+TH/TL in scratchpad of sensor 1 now : 81 / 76
+scratchpad copied to DS18x20 EEPROM
+TH and TL in scratchpad set to 0
+TH/TL in scratchpad of sensor 1 now : 0 / 0
+DS18x20 EEPROM copied back to scratchpad
+TH and TL verified
+TH/TL in scratchpad of sensor 1 now : 81 / 76
+
+There is only one sensor -> Demo of "DS18X20_read_decicelsius_single":
+179 deci°C, +17.9 °C
+
+Convert_T and Read Sensor by Sensor (reverse order)
+Sensor# 1 = 179 deci°C, +17.9 °C
+
+Convert_T for all Sensors and Read Sensor by Sensor
+Sensor# 1 = 179 deci°C, +17.9 °C
+Sensor# 1 = 179375 °Ce-4, +17.9375 °C
+
+Verbose output
+FC:28 (18B)SN: 5A F2 BD 04 00 00 CRC:48  CRC O.K. SP:1F 01 51 4C 7F FF 01 10 CRC:FB  CRC O.K.  T_raw=011F B20/12 +17.9375°C conv: 179 deci°C  fmt: +17.9 °C 
+Convert_T and Read Sensor by Sensor (reverse order)
+Sensor# 1 = 179 deci°C, +17.9 °C
+
+Convert_T for all Sensors and Read Sensor by Sensor
+Sensor# 1 = 179 deci°C, +17.9 °C
+Sensor# 1 = 179375 °Ce-4, +17.9375 °C
+
+Verbose output
+FC:28 (18B)SN: 5A F2 BD 04 00 00 CRC:48  CRC O.K. SP:1F 01 51 4C 7F FF 01 10 CRC:FB  CRC O.K.  T_raw=011F B20/12 +17.9375°C conv: 179 deci°C  fmt: +17.9 °C 
+Convert_T and Read Sensor by Sensor (reverse order)
+Sensor# 1 = 179 deci°C, +17.9 °C
+
+Convert_T for all Sensors and Read Sensor by Sensor
+Sensor# 1 = 180 deci°C, +18.0 °C
+Sensor# 1 = 180000 °Ce-4, +18.0000 °C
+
+Verbose output
+FC:28 (18B)SN: 5A F2 BD 04 00 00 CRC:48  CRC O.K. SP:20 01 51 4C 7F FF 10 10 CRC:D5  CRC O.K.  T_raw=0120 B20/12 +18.0000°C conv: 180 deci°C  fmt: +18.0 °C 
