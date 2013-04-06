@@ -4,7 +4,8 @@
 
 	Autor: Andreas Weber 
 	src: https://github.com/Andy1978/Brautomat
-	changlog: 02.03.2013 angelegt
+	changelog: 02.03.2013 angelegt
+		   06.04.2013 aw: PT100 nun über H-Brücke differentiell einlesen	
 
 	Infos:	
 	H-Brücken PWM Treiber IR2104
@@ -14,8 +15,13 @@
 	/SD untere Halbbrücke PD7
    
   Relais für Heizung: PB3
-  PT100: TBD: ggf. mit Messwandler
-   
+
+  PT100: differentiell Wheatstone bridge
+	PDA0 : Spannungsteiler 6,8k, 100R von AREF (intern 2.56V bandgap)
+	PDA1 : 6,8k, PT100 von AREF
+
+  Dallas DS18xxx an PA6, externe Versorgung 4,7k Pull-Up
+
   LCD:
   S99.5°C  I77.3°C
   RH....
@@ -27,8 +33,6 @@
 
 **************************************************/
 
-#define F_CPU 16000000UL
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -38,6 +42,8 @@
 #include <util/delay.h>
 #include "lcd.h"
 #include "uart.h"
+#include "onewire.h"
+#include "ds18x20.h"
 
 struct s_status
 {
@@ -63,12 +69,50 @@ struct s_setvalues
     //Bit 4: Schritt zurück (Flanke)
 };
 
+#define UART_BAUD_RATE 57600
+#define MAXSENSORS 5
+#define NEWLINESTR "\r\n"
+
 volatile struct s_status status;
 volatile struct s_setvalues setvalues;
 
 uint8_t uart_error;
+uint8_t gSensorIDs[MAXSENSORS][OW_ROMCODE_SIZE];
 
-#define UART_BAUD_RATE 57600
+static uint8_t search_sensors(void)
+{
+	uint8_t i;
+	uint8_t id[OW_ROMCODE_SIZE];
+	uint8_t diff, nSensors;
+	
+	uart_puts_P( NEWLINESTR "Scanning Bus for DS18X20" NEWLINESTR );
+	
+	ow_reset();
+
+	nSensors = 0;
+	
+	diff = OW_SEARCH_FIRST;
+	while ( diff != OW_LAST_DEVICE && nSensors < MAXSENSORS ) {
+		DS18X20_find_sensor( &diff, &id[0] );
+		
+		if( diff == OW_PRESENCE_ERR ) {
+			uart_puts_P( "No Sensor found" NEWLINESTR );
+			break;
+		}
+		
+		if( diff == OW_DATA_ERR ) {
+			uart_puts_P( "Bus Error" NEWLINESTR );
+			break;
+		}
+		
+		for ( i=0; i < OW_ROMCODE_SIZE; i++ )
+			gSensorIDs[nSensors][i] = id[i];
+		
+		nSensors++;
+	}
+	
+	return nSensors;
+}
 
 //  Integer (Basis 10) rechtsbündig auf LCD ausgeben.
 void lcd_put_int(int16_t val, uint8_t len)
@@ -93,8 +137,9 @@ void lcd_put_int32(int32_t val, uint8_t len)
 
 void update_lcd(void)
 {
-  char buf[20];
 
+  char buf[20];
+/*
   //Solltemperatur
   lcd_gotoxy(0,0);
   _delay_ms(2);   //sonst zickt gotoxy rum, TODO: nachprüfen, ggf. Zeit verkleinern
@@ -126,6 +171,16 @@ void update_lcd(void)
   //verbleibende Zeit im Schritt in Sekunden
   sprintf(buf," Z:%5i",status.remaining_step_time);
   lcd_puts(buf);
+*/
+
+
+
+  dtostrf(status.temperature,4,1,buf);
+  lcd_gotoxy(0,0);
+  _delay_ms(2);
+  //itoa(tmp,buf,10);
+  lcd_puts(buf);
+  lcd_puts("      ");
 }
 
 
@@ -142,11 +197,14 @@ int8_t sin_list[]={0,24,48,70,89,105,117,124,127,124,117,105,89,70,48,24,0,-24,-
 ISR(ADC_vect) 
 {
   //Isttemperatur mal über Poti  
-  status.temperature=ADC/1024.0*100;
-  
-	int16_t temp=ADC-512;
-	OCR1A=512-temp;
-	OCR1B=512+temp;
+  //status.temperature=ADC/1024.0*100;
+  //int16_t temp=ADC-512;
+  //OCR1A=512-temp;
+  //OCR1B=512+temp;
+
+  int16_t tmp=ADC;
+  if(tmp>511) tmp = tmp-1024;
+  status.temperature=tmp/10.0; 		  	
 
 /*
 	static float i=0;
@@ -188,12 +246,12 @@ int main(void)
   uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(UART_BAUD_RATE,F_CPU));
   lcd_init(LCD_DISP_ON);
   lcd_clrscr();
-  lcd_puts_P("Brautomat v0.1\n");
+  lcd_puts_P("Brautomat v0.2\n");
   lcd_gotoxy(0,1);
   lcd_puts_P(__DATE__" aw");
 
   //3s Delay for Splash
-  for(uint8_t i=0;i<2;++i)
+  for(uint8_t i=0;i<20;++i)
     _delay_ms(15);
   lcd_clrscr();
 
@@ -223,10 +281,13 @@ int main(void)
 	/*** ADC ***/
 	//Prescaler 64 = 250Khz ADC Clock, AutoTrigger, Interrupts enable
 	ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC) | _BV(ADIE); 
-	//Interne 2.56V Reference verwenden
-	//Multiplexer vorerst auf Kanal2 (Poti),
-  //TODO: später auf PA7, PT100
-	ADMUX = (_BV(REFS0) | _BV(REFS1)) + 2; 	
+	//AVCC with external capacitor at AREF pin als Reference verwenden
+	//siehe S. 215
+	//8=Multiplexer ADC0 positive Input, ADC0 negative, 10x gain
+	//9=Multiplexer ADC1 positive Input, ADC0 negative, 10x gain
+
+	//Channel 9 
+	ADMUX = _BV(REFS1) | _BV(REFS0) | 11; 	
 	//ADC in Free Running mode
 	SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0));	
 

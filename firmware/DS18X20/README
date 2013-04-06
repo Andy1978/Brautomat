@@ -1,0 +1,11 @@
+6.4.2013 Andreas Weber
+
+DS18X20 Library from Martin Thomas
+http://www.siwawi.arubi.uni-kl.de/avr_projects/tempsensor/
+
+Makefile und main quick&dirty angepasst für MKBoard und avrdude.
+
+Beispiel hier dient zum auslesen der Seriennummer,
+beim ersten gebauten Brautomat (Sensor von Klaus)
+SN: 5A F2 BD 04 00 00
+

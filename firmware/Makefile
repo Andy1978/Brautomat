@@ -7,12 +7,12 @@
 MCU = atmega32
 FORMAT = ihex
 TARGET = main
-SRC =    $(TARGET).c lcd.c uart.c
+SRC =    $(TARGET).c lcd.c uart.c crc8.c ds18x20.c onewire.c uart_addon.c
 ASRC =
 OPT = 2
 
 #hier an die verwendete Hardware anpassen
-HWREVISION=REV1
+HWREVISION=REV2
 
 # Name of this Makefile (used for "make depend").
 MAKEFILE = Makefile
@@ -31,7 +31,7 @@ CSTANDARD = -std=gnu99
 
 # Place -D or -U options here
 # hier bei Hardware Revision 1.0 -DREV1 eintragen oder -DREV2 für Revision 2.0
-CDEFS = -D$(HWREVISION)
+CDEFS = -D$(HWREVISION) -DF_CPU=16000000UL
 
 # Place -I options here
 CINCS = -I../common
@@ -109,7 +109,6 @@ AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 AVRDUDE_BASIC = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_FLAGS = $(AVRDUDE_BASIC) $(AVRDUDE_NO_VERIFY) $(AVRDUDE_VERBOSE) $(AVRDUDE_ERASE_COUNTER)
 
-
 CC = avr-gcc
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
@@ -132,7 +131,7 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target.
-all: build
+all: crc8.h ds18x20.h onewire.h uart_addon.h build
 
 build: elf hex lss sym
 
@@ -186,13 +185,13 @@ extcoff: $(TARGET).elf
 
 
 # Link: create ELF output file from object files.
-$(TARGET).elf: $(OBJ)
+$(TARGET).elf: $(OBJ) 
 	$(CC) $(ALL_CFLAGS) $(notdir $(OBJ)) --output $@ $(LDFLAGS)
 
 
 # Compile: create object files from C source files.
 .c.o:
-	$(CC) -c $(ALL_CFLAGS) $< -o $(notdir $@) 
+	$(CC) -c $(ALL_CFLAGS) $< -o $(notdir $@)
 
 
 # Compile: create assembler files from C source files.
@@ -211,6 +210,7 @@ clean:
 	$(REMOVE) $(TARGET).hex $(TARGET).eep $(TARGET).cof $(TARGET).elf \
 	main.s $(TARGET).map $(TARGET).sym $(TARGET).lss \
 	$(notdir $(OBJ)) $(LST) $(SRC:.c=.s) $(SRC:.c=.d)
+	$(REMOVE) crc8.* ds18x20.* onewire.*  uart_addon.*
 
 depend:
 	if grep '^# DO NOT DELETE' $(MAKEFILE) >/dev/null; \
@@ -225,10 +225,7 @@ depend:
 
 .PHONY:	all build elf hex eep lss sym program coff extcoff clean depend
 
-
-
-
-
-
+crc8.c crc8.h ds18x20.c ds18x20.h onewire.c onewire.h uart_addon.c uart_addon.h:
+	cp DS18X20/$@ ./
 
 

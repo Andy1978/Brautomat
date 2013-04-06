@@ -178,7 +178,7 @@ int main( void )
 	uart_init((UART_BAUD_SELECT((BAUD),F_CPU)));
 	
 #ifndef OW_ONE_BUS
-	ow_set_bus(&PIND,&PORTD,&DDRD,PD6);
+	ow_set_bus(&PINA,&PORTA,&DDRA,PA6);
 #endif
 	
 	sei();
@@ -300,6 +300,8 @@ int main( void )
 				}
 				else {
 					uart_puts_P( "CRC Error (lost connection?)" );
+
+
 					error++;
 				}
 				uart_puts_P( NEWLINESTR );
