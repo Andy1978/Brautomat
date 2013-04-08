@@ -1,11 +1,28 @@
+/*
+    Copyright 2013 Andreas Weber (andy.weber.aw at gmail dot com)
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 /*************************************************
 
-  Brautomat
+  Brautomat AVR firmware
 
   Autor: Andreas Weber 
   src: https://github.com/Andy1978/Brautomat
   changelog: 02.03.2013 angelegt
-       06.04.2013 aw: PT100 nun über H-Brücke differentiell einlesen  
+             06.04.2013 aw: PT100 nun über Wheatstone Brücke einlesen und DS18B20 
 
   Infos:  
   H-Brücken PWM Treiber IR2104
@@ -20,7 +37,7 @@
   PDA0 : Spannungsteiler 6,8k, 100R von AREF (intern 2.56V bandgap)
   PDA1 : 6,8k, PT100 von AREF
 
-  Dallas DS18xxx an PA6, externe Versorgung 4,7k Pull-Up
+  Maxim DS18B20 an PA6, externe Versorgung 4,7k Pull-Up
 
   LCD:
   S99.5°C  I77.3°C
@@ -45,15 +62,18 @@
 #include "onewire.h"
 #include "ds18x20.h"
 
+//Telegramm AVR zum PC
 struct s_status
 {
-  float temperature;            //Isttemperatur [°C]
+  float temperature;            //Isttemperatur von DS18B20[°C]
+  int16_t rawPT100;             //Rohwert PT100, differential
   uint8_t aktive_step;          //aktueller Schritt im Ablauf
   uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
   uint8_t  bits;
   //Bit 0 H: Heizung aktiv
 };
 
+//Telegramm vom PC zum AVR
 struct s_setvalues
 {
   float temperature_set_point;  //Solltemperatur [°C]
@@ -221,12 +241,12 @@ int main(void)
   uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(UART_BAUD_RATE,F_CPU));
   lcd_init(LCD_DISP_ON);
   lcd_clrscr();
-  lcd_puts_P("Brautomat v0.2\n");
+  lcd_puts_P("Brautomat v0.3\n");
   lcd_gotoxy(0,1);
   lcd_puts_P(__DATE__" aw");
 
   //3s Delay for Splash
-  for(uint8_t i=0;i<20;++i)
+  for(uint8_t i=0;i<60;++i)
     _delay_ms(15);
   lcd_clrscr();
 
@@ -256,17 +276,16 @@ int main(void)
   /*** ADC ***/
   //Prescaler 64 = 250Khz ADC Clock, AutoTrigger, Interrupts enable
   ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC) | _BV(ADIE); 
-  //AVCC with external capacitor at AREF pin als Reference verwenden
+
+  //AVCC with external capacitor at AREF, internal 2.56V bandgap
   //siehe S. 215
   //8=Multiplexer ADC0 positive Input, ADC0 negative, 10x gain
   //9=Multiplexer ADC1 positive Input, ADC0 negative, 10x gain
-
-  //Channel 9 
   ADMUX = _BV(REFS1) | _BV(REFS0) | 11;   
   //ADC in Free Running mode
   SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0)); 
 
-  //DS18B20
+  //DS18B20 an PA6
   ow_set_bus(&PINA,&PORTA,&DDRA,PA6);
 
   //enable global interrupts
