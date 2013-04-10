@@ -34,7 +34,7 @@ typedef short int16_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
 
-#define DEBUG 0
+#define DEBUG 1
 
 struct s_status
 {

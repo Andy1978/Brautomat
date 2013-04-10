@@ -89,7 +89,8 @@ struct s_setvalues
   //Bit 4: Schritt zurück (Flanke)
 };
 
-#define UART_BAUD_RATE 57600
+//#define UART_BAUD_RATE 57600
+#define UART_BAUD_RATE 115200
 #define MAXSENSORS 5
 #define NEWLINESTR "\r\n"
 #define OW_ONE_BUS
@@ -160,22 +161,15 @@ void update_lcd(void)
 */
 
 
-
+/*
   dtostrf(status.temperature,4,1,buf);
   lcd_gotoxy(0,0);
   _delay_ms(2);
   //itoa(tmp,buf,10);
   lcd_puts(buf);
   lcd_puts(" ");
+*/
 
-  uint8_t i = gSensorID[0]; // family-code for conversion-routine
-  int16_t decicelsius;
-  DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL );
-  _delay_ms( DS18B20_TCONV_12BIT );
-  DS18X20_read_decicelsius_single( i, &decicelsius );
-  DS18X20_format_from_decicelsius( decicelsius, buf, 10 );
-  lcd_puts(buf);
-  lcd_puts("    ");
 }
 
 
@@ -185,11 +179,32 @@ ISR(TIMER0_COMP_vect) //1kHz
     
   if (!disp_cnt++)
     update_lcd();
+    
+  //Temperatur am DS18B20 mit 1Hz messen
+  static int16_t temp_cnt=0;
+  uint8_t i = gSensorID[0]; // family-code for conversion-routine
+  if (temp_cnt++ == 1000)
+  {
+    // zwischen DS18X20_start_meas und DS18X20_read_decicelsius_single
+    // muß _delay_ms( DS18B20_TCONV_12BIT ); (750ms) gewartet werden.
+    // hier wird ja effektiv 1s gewartet
+
+    // alte Messung lesen
+    //char buf[10];
+    int16_t decicelsius;
+    DS18X20_read_decicelsius_single( i, &decicelsius );
+    //DS18X20_format_from_decicelsius( decicelsius, buf, 10 );
+    status.temperature = decicelsius/10.0;
+
+    //neue Messung starten
+    DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL );
+    temp_cnt = 0;
+  }
 }
 
 int8_t sin_list[]={0,24,48,70,89,105,117,124,127,124,117,105,89,70,48,24,0,-24,-48,-70,-89,-105,-117,-124,-127,-124,-117,-105,-89,-70,-48,-24};
 
-ISR(ADC_vect) 
+ISR(ADC_vect) //ca. 125kHz
 {
   //Isttemperatur mal über Poti  
   //status.temperature=ADC/1024.0*100;
@@ -197,17 +212,19 @@ ISR(ADC_vect)
   //OCR1A=512-temp;
   //OCR1B=512+temp;
 
+
+  // PT100 differentiell über Wheatstone Brücke
+  // 6,8k gegen AVRef, interne 2,56V bandgap
+  static uint8_t pt100_cnt=0;
+  static int16_t pt100_sum=0;
   int16_t tmp=ADC;
   if(tmp>511) tmp = tmp-1024;
-  status.temperature=tmp/10.0;        
-
-/*
-  static float i=0;
-  i+=ADC/50000.0;
-  if (i>32) i-=32;
-  OCR1A=512-sin_list[(uint8_t)i];
-  OCR1B=512+sin_list[(uint8_t)i];
-*/  
+  pt100_sum+=tmp;
+  if(!(pt100_cnt++))
+  {
+    status.rawPT100 = pt100_sum;
+    pt100_sum = 0;
+  }
 }
 
 // UART bearbeiten. Es gibt nur ein Telegramm mit allen Sollwerten
@@ -218,6 +235,7 @@ void processUART(void)
   //momentan keine Fehlerbehandlung
   if(uart_GetRXCount()>=sizeof(struct s_setvalues))
   {
+    lcd_clrscr();
     //Empfangen
     char* rec=(char*)&setvalues;
     uint8_t i;
@@ -225,7 +243,8 @@ void processUART(void)
     {
       rec[i]=uart_getc() & 0xFF;
     }
-  
+    lcd_putc('r');
+    
     //status.bits |= setvalues.bits;
     //Senden
     char* send=(char*)&status;
@@ -233,6 +252,7 @@ void processUART(void)
     {
       uart_putc(send[i]); 
     }
+    lcd_putc('s');
   }
 }
 
@@ -274,8 +294,8 @@ int main(void)
 
 
   /*** ADC ***/
-  //Prescaler 64 = 250Khz ADC Clock, AutoTrigger, Interrupts enable
-  ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC) | _BV(ADIE); 
+  //Prescaler 128 = 125kHz ADC Clock, AutoTrigger, Interrupts enable
+  ADCSRA = _BV(ADEN) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC) | _BV(ADIE); 
 
   //AVCC with external capacitor at AREF, internal 2.56V bandgap
   //siehe S. 215

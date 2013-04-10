@@ -77,7 +77,7 @@ int CSerial::readDataBlocking( void * data, int size)
 {
 	if(m_fd < 0)
 		return -1;
-	//Debugging, nummer sicher gehen...
+	//Debugging, auf Nummer sicher gehen...
 	memset(data,0,size);
 
 	int len;
@@ -86,7 +86,7 @@ int CSerial::readDataBlocking( void * data, int size)
 	do
 	{
 	  while(!(len=read(m_fd, d+read_count, size-read_count)));
-	  read_count+=len;		
+	  read_count+=len;
 	}while(read_count<size);
 	return read_count;
 }

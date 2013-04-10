@@ -20,7 +20,8 @@
 cBrautomat::cBrautomat(const char* device)
     :serial()
 {
-  serial.open(device,B57600);
+  //serial.open(device,B57600);
+  serial.open(device,B115200);
   memset(&setvalues,0,sizeof(setvalues));
   //_set_servos(0,0);
 }
@@ -31,9 +32,21 @@ void cBrautomat::update()
   if(DEBUG)
     std::cout << "send "<< ret << " bytes..." << std::endl;
   memset(&status,0,sizeof(s_status));
-  ret=serial.readDataBlocking((char*)&status, sizeof(s_status));
-  if(DEBUG)
-    std::cout << "got "<< ret << " bytes..." << std::endl;
+
+  //jetzt mindestens (37+10)/(115200/8) warten (37bytes zum AVR senden, 10Bytes Antwort)
+  int retry_cnt=0;
+  do
+  {
+    usleep(50000);
+    ret = serial.readData((char*)&status, sizeof(s_status));
+    if(DEBUG)
+      std::cout << "got "<< ret << " bytes..." << std::endl;
+  }while (ret<sizeof(s_status) && ++retry_cnt<20);
+
+  //ret=serial.readDataBlocking((char*)&status, sizeof(s_status));
+
+
+
 }
 
 void cBrautomat::print_setvalues()
@@ -50,6 +63,7 @@ void cBrautomat::print_setvalues()
 void cBrautomat::print_status()
 {
     std::cout << "Isttemperatur     = " << status.temperature << std::endl;
+    std::cout << "RAW PT100         = " << status.rawPT100/256.0 << std::endl;
     std::cout << "aktiver Schritt   = " << int(status.aktive_step) << std::endl;
     std::cout << "verbleibende Zeit = " << int(status.remaining_step_time) << std::endl;
     std::cout << "Heizung aktiv = " << bool(status.bits & 0x01) << std::endl;

@@ -1,0 +1,6 @@
+08.04.2013 Andreas Weber
+
+put both sensors into boiling water, run pt100cal with
+./pt100cal | tee cal1.log
+
+log the temperature decreasing and then process it in octave
