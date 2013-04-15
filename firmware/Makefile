@@ -210,7 +210,7 @@ clean:
 	$(REMOVE) $(TARGET).hex $(TARGET).eep $(TARGET).cof $(TARGET).elf \
 	main.s $(TARGET).map $(TARGET).sym $(TARGET).lss \
 	$(notdir $(OBJ)) $(LST) $(SRC:.c=.s) $(SRC:.c=.d)
-	$(REMOVE) crc8.* ds18x20.* onewire.*  uart_addon.*
+	$(REMOVE) crc8.* ds18x20.h ds18x20.c onewire.*  uart_addon.*
 
 depend:
 	if grep '^# DO NOT DELETE' $(MAKEFILE) >/dev/null; \
@@ -227,5 +227,6 @@ depend:
 
 crc8.c crc8.h ds18x20.c ds18x20.h onewire.c onewire.h uart_addon.c uart_addon.h:
 	cp DS18X20/$@ ./
+	patch ds18x20.h ds18x20.h.diff
 
 

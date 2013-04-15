@@ -71,6 +71,8 @@ struct s_status
   uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
   uint8_t  bits;
   //Bit 0 H: Heizung aktiv
+  uint8_t uart_error_cnt;
+  uint8_t last_uart_error;
 };
 
 //Telegramm vom PC zum AVR
@@ -89,17 +91,20 @@ struct s_setvalues
   //Bit 4: Schritt zurück (Flanke)
 };
 
-//#define UART_BAUD_RATE 57600
-#define UART_BAUD_RATE 115200
+#define UART_BAUD_RATE 38400
+//#define UART_BAUD_RATE 115200
 #define MAXSENSORS 5
 #define NEWLINESTR "\r\n"
 #define OW_ONE_BUS
 
 volatile struct s_status status;
 volatile struct s_setvalues setvalues;
+volatile uint8_t do_ds18b20_meas;
+volatile uint8_t do_update_lcd;
 
 uint8_t uart_error;
 uint8_t gSensorID[OW_ROMCODE_SIZE]={ 0x5A, 0xF2, 0xBD, 0x04};
+
 
 //  Integer (Basis 10) rechtsbündig auf LCD ausgeben.
 void lcd_put_int(int16_t val, uint8_t len)
@@ -126,7 +131,7 @@ void update_lcd(void)
 {
 
   char buf[20];
-/*
+
   //Solltemperatur
   lcd_gotoxy(0,0);
   _delay_ms(2);   //sonst zickt gotoxy rum, TODO: nachprüfen, ggf. Zeit verkleinern
@@ -158,48 +163,26 @@ void update_lcd(void)
   //verbleibende Zeit im Schritt in Sekunden
   sprintf(buf," Z:%5i",status.remaining_step_time);
   lcd_puts(buf);
-*/
-
 
 /*
-  dtostrf(status.temperature,4,1,buf);
   lcd_gotoxy(0,0);
-  _delay_ms(2);
-  //itoa(tmp,buf,10);
-  lcd_puts(buf);
-  lcd_puts(" ");
+  lcd_put_int(status.uart_error_cnt,3);
+  lcd_putc(' ');
+  lcd_put_int(uart_error,3);
 */
-
+  
 }
 
-
+//ISR(TIMER0_COMP_vect, ISR_NOBLOCK) //1kHz
 ISR(TIMER0_COMP_vect) //1kHz
 {
-  static uint8_t disp_cnt=0;
-    
-  if (!disp_cnt++)
-    update_lcd();
-    
-  //Temperatur am DS18B20 mit 1Hz messen
-  static int16_t temp_cnt=0;
-  uint8_t i = gSensorID[0]; // family-code for conversion-routine
-  if (temp_cnt++ == 1000)
+  static int16_t cnt=0;
+  if (cnt++ == 1000)
   {
-    // zwischen DS18X20_start_meas und DS18X20_read_decicelsius_single
-    // muß _delay_ms( DS18B20_TCONV_12BIT ); (750ms) gewartet werden.
-    // hier wird ja effektiv 1s gewartet
-
-    // alte Messung lesen
-    //char buf[10];
-    int16_t decicelsius;
-    DS18X20_read_decicelsius_single( i, &decicelsius );
-    //DS18X20_format_from_decicelsius( decicelsius, buf, 10 );
-    status.temperature = decicelsius/10.0;
-
-    //neue Messung starten
-    DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL );
-    temp_cnt = 0;
-  }
+    do_ds18b20_meas=1;
+    cnt = 0;
+  }else if(cnt==500)
+    do_update_lcd=1;
 }
 
 int8_t sin_list[]={0,24,48,70,89,105,117,124,127,124,117,105,89,70,48,24,0,-24,-48,-70,-89,-105,-117,-124,-127,-124,-117,-105,-89,-70,-48,-24};
@@ -215,6 +198,7 @@ ISR(ADC_vect) //ca. 125kHz
 
   // PT100 differentiell über Wheatstone Brücke
   // 6,8k gegen AVRef, interne 2,56V bandgap
+
   static uint8_t pt100_cnt=0;
   static int16_t pt100_sum=0;
   int16_t tmp=ADC;
@@ -225,6 +209,7 @@ ISR(ADC_vect) //ca. 125kHz
     status.rawPT100 = pt100_sum;
     pt100_sum = 0;
   }
+
 }
 
 // UART bearbeiten. Es gibt nur ein Telegramm mit allen Sollwerten
@@ -232,19 +217,22 @@ ISR(ADC_vect) //ca. 125kHz
 void processUART(void)
 {
   //Alle Daten empfangen
-  //momentan keine Fehlerbehandlung
-  if(uart_GetRXCount()>=sizeof(struct s_setvalues))
+  while(uart_GetRXCount()>=sizeof(struct s_setvalues))
   {
-    lcd_clrscr();
     //Empfangen
     char* rec=(char*)&setvalues;
     uint8_t i;
+    uint16_t rx_tmp;
     for(i=0;i<sizeof(struct s_setvalues);i++)
     {
-      rec[i]=uart_getc() & 0xFF;
+      rx_tmp=uart_getc();
+      rec[i]=rx_tmp & 0xFF;
+      if(rx_tmp & 0xFF00)
+      {
+        status.uart_error_cnt++;
+        uart_error=((rx_tmp & 0xFF00) >> 8);
+      }  
     }
-    lcd_putc('r');
-    
     //status.bits |= setvalues.bits;
     //Senden
     char* send=(char*)&status;
@@ -252,16 +240,16 @@ void processUART(void)
     {
       uart_putc(send[i]); 
     }
-    lcd_putc('s');
   }
 }
 
 int main(void)
 {
-  uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(UART_BAUD_RATE,F_CPU));
+  //uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(UART_BAUD_RATE,F_CPU));
+  uart_init(UART_BAUD_SELECT(UART_BAUD_RATE,F_CPU));
   lcd_init(LCD_DISP_ON);
   lcd_clrscr();
-  lcd_puts_P("Brautomat v0.3\n");
+  lcd_puts_P("Brautomat v0.4\n");
   lcd_gotoxy(0,1);
   lcd_puts_P(__DATE__" aw");
 
@@ -271,7 +259,7 @@ int main(void)
   lcd_clrscr();
 
   //H-Brücke
-  DDRD |= _BV(PD4) | _BV(PD5) | _BV(PD6) | _BV(PD7);
+  DDRD |= _BV(PD2) | _BV(PD4) | _BV(PD5) | _BV(PD6) | _BV(PD7);
   //Relais für Heizung
   DDRB |= _BV(PB3);
   PORTD |= _BV(PD6) | _BV(PD7);
@@ -309,11 +297,30 @@ int main(void)
   ow_set_bus(&PINA,&PORTA,&DDRA,PA6);
 
   //enable global interrupts
-    sei();      
-  
-    for (;;)    /* main event loop */
+  sei();      
+
+  for (;;)    /* main event loop */
     {
       processUART();
+      if(do_ds18b20_meas)
+      {
+        //Temperatur am DS18B20 messen
+        // zwischen DS18X20_start_meas und DS18X20_read_decicelsius_single
+        // muß _delay_ms( DS18B20_TCONV_12BIT ); (750ms) gewartet werden.
+        // alte Messung lesen
+        int16_t decicelsius;
+        DS18X20_read_decicelsius_single( gSensorID[0], &decicelsius );
+        status.temperature = decicelsius/10.0;
+        //neue Messung starten
+        //DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL );
+        DS18X20_start_meas( DS18X20_POWER_EXTERN, NULL );
+        do_ds18b20_meas = 0;
+      }
+      if(do_update_lcd)
+      {
+        update_lcd();
+        do_update_lcd=0;
+      }
     }
     return 0;
 }

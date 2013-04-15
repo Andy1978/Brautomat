@@ -34,7 +34,7 @@ typedef short int16_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
 
-#define DEBUG 1
+#define DEBUG 0
 
 struct s_status
 {
@@ -44,6 +44,8 @@ struct s_status
   uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
   uint8_t	 bits;
   //Bit 0: Heizung aktiv
+  uint8_t uart_error;
+  uint8_t last_uart_error;      //UART_FRAME_ERROR=8, ART_OVERRUN_ERROR=4, BUFFER_OVERFLOW=2  
 } __attribute__((__packed__));
 
 struct s_setvalues

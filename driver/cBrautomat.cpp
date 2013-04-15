@@ -21,7 +21,8 @@ cBrautomat::cBrautomat(const char* device)
     :serial()
 {
   //serial.open(device,B57600);
-  serial.open(device,B115200);
+  //serial.open(device,B115200);
+  serial.open(device,B38400);
   memset(&setvalues,0,sizeof(setvalues));
   //_set_servos(0,0);
 }
@@ -35,17 +36,19 @@ void cBrautomat::update()
 
   //jetzt mindestens (37+10)/(115200/8) warten (37bytes zum AVR senden, 10Bytes Antwort)
   int retry_cnt=0;
+  const int max_retry=5;
   do
   {
-    usleep(50000);
+    usleep(30000);
     ret = serial.readData((char*)&status, sizeof(s_status));
     if(DEBUG)
       std::cout << "got "<< ret << " bytes..." << std::endl;
-  }while (ret<sizeof(s_status) && ++retry_cnt<20);
-
-  //ret=serial.readDataBlocking((char*)&status, sizeof(s_status));
-
-
+  }while (ret<sizeof(s_status) && ++retry_cnt<max_retry);
+  if(retry_cnt==max_retry)
+  {
+    std:cerr << "cBrautomat::update(), max retry count überschritten, keine Antwort" << endl;
+    exit(-1);
+  }
 
 }
 
