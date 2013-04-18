@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string.h>
+#include <time.h> 
 #include "../driver/cBrautomat.h"
 
 using namespace std;
@@ -12,12 +13,14 @@ int main()
   cout << "# put PT100 and DS18B20 into boiling water" << endl;
   cBrautomat myBrautomat("/dev/ttyUSB0");
 
-  cout << "# status.temperature status.rawPT100" << endl;
+  cout << "# unix timestamp, status.temperature, status.rawPT100" << endl;
   while(1)
   {
+    time_t t=time(NULL);
     myBrautomat.update();
-    cout << myBrautomat.status.temperature << " " << myBrautomat.status.rawPT100/100.0 << endl;
-    //sleep(1);
+    cout << t << " " << myBrautomat.status.temperature << " " << myBrautomat.status.rawPT100/64.0 << endl;
+    //usleep(500000);
+    sleep(1);
   }
   return 0;
 }
