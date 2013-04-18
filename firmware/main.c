@@ -66,7 +66,7 @@
 struct s_status
 {
   float temperature;            //Isttemperatur von DS18B20[°C]
-  int16_t rawPT100;             //Rohwert PT100, differential
+  int16_t rawPT100;             //Rohwert PT100, differential, Summe über 100 samples
   uint8_t aktive_step;          //aktueller Schritt im Ablauf
   uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
   uint8_t  bits;
@@ -198,16 +198,18 @@ ISR(ADC_vect) //ca. 125kHz
 
   // PT100 differentiell über Wheatstone Brücke
   // 6,8k gegen AVRef, interne 2,56V bandgap
+  // siehe PT100_calibration/t_plot.m
 
   static uint8_t pt100_cnt=0;
   static int16_t pt100_sum=0;
   int16_t tmp=ADC;
   if(tmp>511) tmp = tmp-1024;
   pt100_sum+=tmp;
-  if(!(pt100_cnt++))
+  if(pt100_cnt++==100)
   {
     status.rawPT100 = pt100_sum;
     pt100_sum = 0;
+    pt100_cnt=0;
   }
 
 }

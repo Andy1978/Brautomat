@@ -16,7 +16,7 @@ int main()
   while(1)
   {
     myBrautomat.update();
-    cout << myBrautomat.status.temperature << " " << myBrautomat.status.rawPT100/256.0 << endl;
+    cout << myBrautomat.status.temperature << " " << myBrautomat.status.rawPT100/100.0 << endl;
     //sleep(1);
   }
   return 0;
