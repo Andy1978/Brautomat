@@ -25,8 +25,12 @@
 ##                                      |
 ##(created by AACircuit v1.28.6 beta 04/19/05 www.tech-chat.de)
 
-d=load("100deg_1.log.gz");
-#plot(d(:,1),";DS18B20;",d(:,2),";PT100 ADC Raw;");
+## erste Messung ohne timestamp und int16 overflow
+## d=load("100deg_1.log.gz");
+## plot(d(:,1),";DS18B20;",d(:,2),";PT100 ADC Raw;");
+
+## zweite Messung von 95°C bis -5°C
+d=load("100deg_2.log");
 
 R1=R2=6800;
 R3=120;
@@ -42,6 +46,6 @@ b = -5.775e-7;   #1 / °C^2
 ti=linspace(0,100,1000);
 Ri=R0*polyval([b a 1],ti);
 ADC=Gain*512*(Ri./(R1+Ri)-R3/(R2+R3));
-t=interp1(ADC,ti,d(:,2));
-plot(d(:,1),";DS18B20;",t,";uncal. PT100 Temp;");
+t=interp1(ADC,ti,d(:,3));
+plot(d(:,2),";DS18B20;",t,";uncal. PT100 Temp;");
 grid on
