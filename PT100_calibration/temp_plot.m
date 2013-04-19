@@ -30,7 +30,14 @@
 ## plot(d(:,1),";DS18B20;",d(:,2),";PT100 ADC Raw;");
 
 ## zweite Messung von 95°C bis -5°C
-d=load("100deg_2.log");
+##d=load("100deg_2.log");
+
+## dritte Messung (lang), zuerst isolierter Becher, dann Kaffeetasse
+## von 95°C bis 13.3°C
+d=load("100deg_3.log");
+
+## Von Hand aufgezeichnete Messung mit "huber precision thermometer D150" 
+dm=load("huber_D150_3.log");
 
 R1=R2=6800;
 R3=120;
@@ -47,5 +54,9 @@ ti=linspace(0,100,1000);
 Ri=R0*polyval([b a 1],ti);
 ADC=Gain*512*(Ri./(R1+Ri)-R3/(R2+R3));
 t=interp1(ADC,ti,d(:,3));
-plot(d(:,2),";DS18B20;",t,";uncal. PT100 Temp;");
+
+graphics_toolkit fltk
+f=60*60*24;
+plot(d(:,1)/f,d(:,2),";DS18B20;",d(:,1)/f,t,";uncal. PT100 Temp;",dm(:,1)/f,dm(:,2),"-x;manual DS150;");
+datetick("dd-mm-yyyy\n HH:MM:SS")
 grid on
