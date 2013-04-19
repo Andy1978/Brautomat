@@ -1,0 +1,9 @@
+h=zenity_progress("warte..");
+for(k=1:60)
+beep();
+fflush(stdout);
+for(i=1:100)
+  sleep(3)
+  zenity_progress(h,i);
+endfor
+endfor
