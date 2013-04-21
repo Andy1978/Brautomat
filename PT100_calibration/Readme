@@ -1,6 +1,45 @@
-08.04.2013 Andreas Weber
+19.04.2013 Andreas Weber
 
-put both sensors into boiling water, run pt100cal with
-./pt100cal | tee cal1.log
+Test programs and scripts to test the PT100-wheatstone bridge setup
+on AVR differential inputs.
+
+##                               ___    |
+##                           5V -UUU----oAVcc
+##                                      |
+##  .----o--------------o---------------oARef
+##  |    |              |               |
+##  |   .-.            .-.              |
+##  |   | | R1         | | R2           |
+##  |   | | 6.8k       | | 6.8k         |
+##  |   '-'            '-'              |
+##  |    |              |               |
+##  |    o--------------)---------------oADC 0
+## ---   |              |               |
+## ---   |              o---------------oADC 1
+##  |    |              |               |
+## 100nF |              |               |
+##  |   .-.            .-.              |
+##  |   | | Rpt        | | R3           |
+##  |   | | PT100      | | 120R         |
+##  |   '-'            '-'              |
+##  |    |              |               |
+##  '----o--------------o---------------oAGND
+##                                      |
+##(created by AACircuit v1.28.6 beta 04/19/05 www.tech-chat.de)
+
+put both sensors (PT100 and DS18B20) into boiling water, run pt100cal with
+./pt100cal | tee yourlogfile.log
 
 log the temperature decreasing and then process it in octave
+
+captures/100deg_1.log.gz
+  was a first fast polling measurement without timestamp
+  and suffered from a int16 overflow (sum filter was too big)
+
+captures/100deg_2.log 
+  second capture with temperatures from 95°C .. -5°C (ice and salt)
+  huber_D150_2.log is the corresponding, manual captured reference
+
+captures/100deg_3.log 
+  third capture in isolated mug and temperatures from 95°C..13.3°C
+  huber_D150_3.log is the corresponding, manual captured reference
