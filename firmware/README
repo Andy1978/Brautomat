@@ -4,3 +4,6 @@ Andreas Weber:
 Firmware für den Atmega32 mit MKBoard.
 Ich verwende vorerst bei Board mit der HardwareRev1
 
+fuses sind
+avrdude -P usb -c usbasp -p atmega32 -U lfuse:w:0x3F:m
+avrdude -P usb -c usbasp -p atmega32 -U hfuse:w:0xD9:m
