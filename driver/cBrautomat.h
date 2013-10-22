@@ -39,7 +39,6 @@ typedef unsigned char uint8_t;
 struct s_status
 {
   float temperature;            //Isttemperatur [°C]
-  int16_t rawPT100;             //Rohwert PT100, differential
   uint8_t aktive_step;          //aktueller Schritt im Ablauf
   uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
   uint8_t	 bits;

@@ -23,6 +23,7 @@
   src: https://github.com/Andy1978/Brautomat
   changelog: 02.03.2013 angelegt
              06.04.2013 aw: PT100 nun über Wheatstone Brücke einlesen und DS18B20 
+             22.10.2013 aw: PT100 entfernt, nur noch DS18B20
 
   Infos:  
   H-Brücken PWM Treiber IR2104
@@ -30,12 +31,16 @@
   /SD obere Halbbrücke PD6
   IN untere Halbbrücke PD5, OC1A
   /SD untere Halbbrücke PD7
+
+  Scheibenwischermotor Opel Astra Bj 86..89?
+  Stecker-Pin Adernfarbe  Funktion
+  E           weiß        Motor schnell gegen Masse/Gehäuse
+  D           violett/sw  0-Stellung
+  C           grün        0-Stellung kurz gegen MAsse
+  B
+  A           orange      Motor langsam gegen Masse/Gehäuse
    
   Relais für Heizung: PB3
-
-  PT100: differentiell Wheatstone bridge
-  PDA0 : Spannungsteiler 6,8k, 100R von AREF (intern 2.56V bandgap)
-  PDA1 : 6,8k, PT100 von AREF
 
   Maxim DS18B20 an PA6, externe Versorgung 4,7k Pull-Up
 
@@ -66,7 +71,6 @@
 struct s_status
 {
   float temperature;            //Isttemperatur von DS18B20[°C]
-  int16_t rawPT100;             //Rohwert PT100, differential, Summe über 64 samples
   uint8_t aktive_step;          //aktueller Schritt im Ablauf
   uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
   uint8_t  bits;
@@ -189,28 +193,17 @@ int8_t sin_list[]={0,24,48,70,89,105,117,124,127,124,117,105,89,70,48,24,0,-24,-
 
 ISR(ADC_vect) //ca. 125kHz
 {
-  //Isttemperatur mal über Poti  
-  //status.temperature=ADC/1024.0*100;
-  //int16_t temp=ADC-512;
-  //OCR1A=512-temp;
-  //OCR1B=512+temp;
+  int16_t temp=ADC-512;
+  OCR1A=512-temp;
+  OCR1B=512+temp;
+  //OCR1A=1023;
+  //OCR1B=0;
 
-
-  // PT100 differentiell über Wheatstone Brücke
-  // 6,8k gegen AVRef, interne 2,56V bandgap
-  // siehe PT100_calibration/t_plot.m
-
-  static uint8_t pt100_cnt=0;
-  static int16_t pt100_sum=0;
-  int16_t tmp=ADC;
-  if(tmp>511) tmp = tmp-1024;
-  pt100_sum+=tmp;
-  if(pt100_cnt++==63)
-  {
-    status.rawPT100 = pt100_sum;
-    pt100_sum = 0;
-    pt100_cnt=0;
-  }
+  //kurzer Heizungsrelais Test
+  if(ADC>500)
+    PORTB |= _BV(PB3);
+  else
+    PORTB &= ~(_BV(PB3));
 
 }
 
@@ -251,7 +244,7 @@ int main(void)
   uart_init(UART_BAUD_SELECT(UART_BAUD_RATE,F_CPU));
   lcd_init(LCD_DISP_ON);
   lcd_clrscr();
-  lcd_puts_P("Brautomat v0.4\n");
+  lcd_puts_P("Brautomat v0.5\n");
   lcd_gotoxy(0,1);
   lcd_puts_P(__DATE__" aw");
 
@@ -289,9 +282,7 @@ int main(void)
 
   //AVCC with external capacitor at AREF, internal 2.56V bandgap
   //siehe S. 215
-  //8=Multiplexer ADC0 positive Input, ADC0 negative, 10x gain
-  //9=Multiplexer ADC1 positive Input, ADC0 negative, 10x gain
-  ADMUX = _BV(REFS1) | _BV(REFS0) | 11;   
+  ADMUX = (_BV(REFS0) | _BV(REFS1)) + 2;   
   //ADC in Free Running mode
   SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0)); 
 
