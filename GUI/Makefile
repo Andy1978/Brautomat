@@ -1,6 +1,6 @@
 .PHONY = clean
 
-brautomat_gui: brautomat_gui.fld
+brautomat_gui: brautomat_gui.fld Spreadsheet.h
 	fluid -c $<
 	fltk-config --compile brautomat_gui.cxx
 

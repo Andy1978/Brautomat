@@ -2,15 +2,18 @@
 version 1.0302 
 header_name {.h} 
 code_name {.cxx}
+decl {\#include "Spreadsheet.h"} {public global
+} 
+
 Function {} {open
 } {
   Fl_Window mainwin {
-    label {Brauautomat GUI v0.0.1} open selected
-    xywh {799 125 870 850} type Double resizable visible
+    label {Brauautomat GUI v0.0.2} open selected
+    xywh {1074 74 675 850} type Double resizable size_range {675 850 1000 1000} visible
   } {
     Fl_Button {} {
       label Upload
-      xywh {445 205 85 25} type Normal box UP_BOX selection_color 49 align 0
+      xywh {445 205 85 25}
     }
     Fl_Group {} {
       label {Rührwerk} open
@@ -30,11 +33,11 @@ Function {} {open
       }
       Fl_Button {} {
         label Ein
-        xywh {155 195 40 30} type Normal box UP_BOX selection_color 49 align 0
+        xywh {155 195 40 30}
       }
       Fl_Button {} {
         label Aus
-        xywh {200 195 40 30} type Normal box UP_BOX selection_color 49 align 0
+        xywh {200 195 40 30}
       }
       Fl_Value_Slider sl_periodendauer {
         label Periodendauer
@@ -51,7 +54,7 @@ Function {} {open
     }
     Fl_Button {} {
       label Download
-      xywh {445 235 85 25} type Normal box UP_BOX selection_color 49 align 0
+      xywh {445 235 85 25}
     }
     Fl_Button {} {
       label test
@@ -77,7 +80,7 @@ temp_profile->cols(5);
     temp_profile->col_header_height(25);
     temp_profile->col_resize(1);
     temp_profile->col_width_all(80);}
-      xywh {445 290 95 25} type Normal box UP_BOX selection_color 49 align 0
+      xywh {445 290 95 25}
     }
     Fl_Group {} {
       label {Heizung Sollwerte und Steuerung} open
@@ -93,11 +96,11 @@ temp_profile->cols(5);
       }
       Fl_Button {} {
         label Ein
-        xywh {155 40 40 30} type Normal box UP_BOX selection_color 49 align 0
+        xywh {155 40 40 30}
       }
       Fl_Button {} {
         label Aus
-        xywh {200 40 40 30} type Normal box UP_BOX selection_color 49 align 0
+        xywh {200 40 40 30}
       }
       Fl_Value_Slider sl_temperatur {
         label Solltemperatur
@@ -130,8 +133,9 @@ temp_profile->cols(5);
       xywh {10 395 640 415} box GTK_UP_BOX align 5
     } {
       Fl_Table temp_profile {
-        label test open
-        xywh {30 500 575 285}
+        label Schrittparameter open
+        xywh {30 500 575 285} align 5
+        class Spreadsheet
       } {}
       Fl_Value_Output {} {
         label {aktiver Schritt}
@@ -143,12 +147,24 @@ temp_profile->cols(5);
       }
       Fl_Button {} {
         label {Schritt vor}
-        xywh {310 410 130 30} type Normal box UP_BOX selection_color 49 align 0
+        xywh {310 410 130 30}
       }
       Fl_Button {} {
         label {Schritt zurück}
-        xywh {310 445 130 30} type Normal box UP_BOX selection_color 49 align 0
+        xywh {310 445 130 30}
       }
     }
   }
+  code {// Table rows
+  temp_profile->row_header(1);
+  temp_profile->row_header_width(70);
+  temp_profile->row_resize(1);
+  temp_profile->rows(5);
+  temp_profile->row_height_all(25);
+  // Table cols
+  temp_profile->col_header(1);
+  temp_profile->col_header_height(25);
+  temp_profile->col_resize(1);
+  temp_profile->cols(MAX_COLS);
+  temp_profile->col_width_all(90);} {}
 } 
