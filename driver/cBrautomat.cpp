@@ -66,7 +66,6 @@ void cBrautomat::print_setvalues()
 void cBrautomat::print_status()
 {
     std::cout << "Isttemperatur     = " << status.temperature << std::endl;
-    std::cout << "RAW PT100         = " << status.rawPT100/256.0 << std::endl;
     std::cout << "aktiver Schritt   = " << int(status.aktive_step) << std::endl;
     std::cout << "verbleibende Zeit = " << int(status.remaining_step_time) << std::endl;
     std::cout << "Heizung aktiv = " << bool(status.bits & 0x01) << std::endl;
@@ -137,3 +136,90 @@ void cBrautomat::set_QWP_rotation(double rot)
 }
 
 */
+
+int cBrautomat::load_cfg(const char* filename)
+{
+  Config cfg;
+  //try to read the file
+  try
+    {
+      cfg.readFile(filename);
+      cfg.lookupValue("version", pattern_version);
+      cfg.lookupValue("comment", pattern_comment);
+      cfg.lookupValue("author", pattern_author);
+
+      Setting &period = cfg.lookup("pattern.period");
+      Setting &angle  = cfg.lookup("pattern.angle");
+      Setting &phase  = cfg.lookup("pattern.phase");
+      if(    (period.getLength() != angle.getLength())
+             || (phase.getLength()  != angle.getLength())
+             || (angle.getLength()  != phase.getLength()))
+        {
+          cerr << "error: length of period, angle and phase have to be equal\\n" << endl;;
+          return -1;
+        }
+
+      //clear the vectors
+      pattern_periods.clear();
+      pattern_angles.clear();
+      pattern_phases.clear();
+
+      int cnt = period.getLength();
+      cout << "INFO: num patterns read = "<< cnt << endl;
+      for (int i=0; i<cnt; ++i)
+        {
+          pattern_periods.push_back(double(period[i]));
+          pattern_angles.push_back(double(angle[i]));
+          pattern_phases.push_back(double(phase[i]));
+        }
+    }
+  catch (FileIOException &fioex) //file does not exist or parse error
+    {
+      std::cerr << "File I/O error " << filename << std::endl;
+      return(EXIT_FAILURE);
+    }
+  catch(const ParseException &pex)
+    {
+      cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+           << " - " << pex.getError() << std::endl;
+      return(EXIT_FAILURE);
+    }
+  return(EXIT_SUCCESS);
+}
+
+int cBrautomat::save_cfg(const char* filename)
+{
+  //try to remove the file
+  int ret = std::remove (filename);
+  if(!ret)
+    cout << "INFO: removed file " << filename << endl;
+  else
+    cout << "INFO: couldn't remove " << filename << ". MSG: " << strerror(errno) << endl;
+
+  try
+    {
+      Config cfg;
+      Setting &root = cfg.getRoot();
+      root.add("version", Setting::TypeString) = pattern_version;
+      root.add("comment", Setting::TypeString) = pattern_comment;
+      root.add("author", Setting::TypeString)  = pattern_author;
+      Setting &pattern = root.add("pattern", Setting::TypeGroup);
+      Setting &period  = pattern.add("period", Setting::TypeArray);
+      Setting &angle   = pattern.add("angle", Setting::TypeArray);
+      Setting &phase   = pattern.add("phase", Setting::TypeArray);
+
+      for (unsigned int i=0; i<pattern_periods.size(); ++i)
+        {
+          period.add(Setting::TypeFloat) = pattern_periods[i];
+          angle.add(Setting::TypeFloat)  = pattern_angles[i];
+          phase.add(Setting::TypeFloat)  = pattern_phases[i];
+        }
+      cfg.writeFile(filename);
+    }
+  catch(const FileIOException &fioex)
+    {
+      cerr << "I/O error while writing file: " << filename << endl;
+      return(EXIT_FAILURE);
+    }
+  return(EXIT_SUCCESS);
+}

@@ -22,6 +22,7 @@
 #ifndef _C_BRAUTOMAT_H
 #define _C_BRAUTOMAT_H
 
+#include <libconfig.h++>
 #include <iostream>
 #include <string.h>
 #include <stdlib.h>
@@ -35,6 +36,7 @@ typedef int int32_t;
 typedef unsigned char uint8_t;
 
 #define DEBUG 0
+#define MAX_STEPS 5
 
 struct s_status
 {
@@ -52,8 +54,8 @@ struct s_setvalues
   float temperature_set_point;  //Solltemperatur [°C]
   uint8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
   uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
-  float step_temp[5];           //Temperatur in der Schrittkette
-  uint16_t step_time[5];        //Dauer Schritt
+  float step_temp[MAX_STEPS];           //Temperatur in der Schrittkette
+  uint16_t step_time[MAX_STEPS];        //Dauer Schritt
   uint8_t	 bits;
   //Bit 0: Temperaturregelung aktiv (Handbetrieb wenn nicht)
   //Bit 1: Heizung aktiv im Handbetrieb
@@ -65,15 +67,22 @@ struct s_setvalues
 class cBrautomat
 {
 public:
-    cBrautomat(const char* device);
+  cBrautomat(const char* device);
 
-    s_status status;
-    s_setvalues setvalues;
+  //AVR relevant
+  s_status status;
+  s_setvalues setvalues;
+  
+  //Allgemein
+  string profile_name;
 
-    void print_setvalues();
-    void print_status();
-    void print_steps();
-    void update();
+  void print_setvalues();
+  void print_status();
+  void print_steps();
+  void update();
+  
+  int load_cfg(const char* filename);
+  int save_cfg(const char* filename);
 
 private:
     CSerial serial;
