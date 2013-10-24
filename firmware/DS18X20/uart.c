@@ -2,21 +2,21 @@
 Title:    Interrupt UART library with receive/transmit circular buffers
 Author:   Peter Fleury <pfleury@gmx.ch>   http://jump.to/fleury
 File:     $Id: uart.c,v 1.5.2.10 2005/11/15 19:49:12 peter Exp $
-Software: AVR-GCC 3.3 
-Hardware: any AVR with built-in UART, 
+Software: AVR-GCC 3.3
+Hardware: any AVR with built-in UART,
           tested on AT90S8515 at 4 Mhz and ATmega at 1Mhz
 
 DESCRIPTION:
     An interrupt is generated when the UART has finished transmitting or
     receiving a byte. The interrupt handling routines use circular buffers
     for buffering received and transmitted data.
-    
+
     The UART_RX_BUFFER_SIZE and UART_TX_BUFFER_SIZE variables define
-    the buffer size in bytes. Note that these variables must be a 
+    the buffer size in bytes. Note that these variables must be a
     power of 2.
 
 USAGE:
-    Refere to the header file uart.h for a description of the routines. 
+    Refere to the header file uart.h for a description of the routines.
     See also example test_uart.c.
 
 NOTES:
@@ -61,7 +61,7 @@ NOTES:
  #define UART0_TRANSMIT_INTERRUPT  SIG_UART_DATA
  #define UART0_STATUS   USR
  #define UART0_CONTROL  UCR
- #define UART0_DATA     UDR  
+ #define UART0_DATA     UDR
  #define UART0_UDRIE    UDRIE
 #elif defined(__AVR_AT90S2333__) || defined(__AVR_AT90S4433__)
  /* old AVR classic with one UART */
@@ -70,7 +70,7 @@ NOTES:
  #define UART0_TRANSMIT_INTERRUPT  SIG_UART_DATA
  #define UART0_STATUS   UCSRA
  #define UART0_CONTROL  UCSRB
- #define UART0_DATA     UDR 
+ #define UART0_DATA     UDR
  #define UART0_UDRIE    UDRIE
 #elif  defined(__AVR_ATmega8__)  || defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) \
   || defined(__AVR_ATmega8515__) || defined(__AVR_ATmega8535__) \
@@ -83,7 +83,7 @@ NOTES:
  #define UART0_CONTROL  UCSRB
  #define UART0_DATA     UDR
  #define UART0_UDRIE    UDRIE
-#elif defined(__AVR_ATmega163__) 
+#elif defined(__AVR_ATmega163__)
   /* ATmega163 with one UART */
  #define ATMEGA_UART
  #define UART0_RECEIVE_INTERRUPT   SIG_UART_RECV
@@ -92,7 +92,7 @@ NOTES:
  #define UART0_CONTROL  UCSRB
  #define UART0_DATA     UDR
  #define UART0_UDRIE    UDRIE
-#elif defined(__AVR_ATmega162__) 
+#elif defined(__AVR_ATmega162__)
  /* ATmega with two USART */
  #define ATMEGA_USART0
  #define ATMEGA_USART1
@@ -127,7 +127,7 @@ NOTES:
 #elif defined(__AVR_ATmega161__)
  /* ATmega with UART */
  #error "AVR ATmega161 currently not supported by this libaray !"
-#elif defined(__AVR_ATmega169__) 
+#elif defined(__AVR_ATmega169__)
  /* ATmega with one USART */
  #define ATMEGA_USART
  #define UART0_RECEIVE_INTERRUPT   SIG_USART_RECV
@@ -147,7 +147,7 @@ NOTES:
  #define UART0_UDRIE    UDRIE0
 #elif defined(__AVR_ATtiny2313__)
  #define ATMEGA_USART
- #define UART0_RECEIVE_INTERRUPT   SIG_USART0_RX 
+ #define UART0_RECEIVE_INTERRUPT   SIG_USART0_RX
  #define UART0_TRANSMIT_INTERRUPT  SIG_USART0_UDRE
  #define UART0_STATUS   UCSRA
  #define UART0_CONTROL  UCSRB
@@ -219,7 +219,7 @@ Purpose:  called when the UART has received a character
     unsigned char usr;
     unsigned char lastRxError;
 
-    /* read UART status register and UART data register */ 
+    /* read UART status register and UART data register */
     usr  = UART0_STATUS;
     data = UART0_DATA;
 
@@ -233,7 +233,7 @@ Purpose:  called when the UART has received a character
     lastRxError = (usr & (_BV(FE)|_BV(DOR)) );
 #endif
 
-    /* calculate buffer index */ 
+    /* calculate buffer index */
     tmphead = ( UART_RxHead + 1) & UART_RX_BUFFER_MASK;
 
     if ( tmphead == UART_RxTail ) {
@@ -293,7 +293,7 @@ void uart_init(unsigned int baudrate)
 #elif defined ( ATMEGA_USART )
     /* Set baud rate */
     if ( baudrate & 0x8000 ) {
-        UART0_STATUS = (1<<U2X);  //Enable 2x speed 
+        UART0_STATUS = (1<<U2X);  //Enable 2x speed
         baudrate &= ~0x8000;
     }
 
@@ -313,7 +313,7 @@ void uart_init(unsigned int baudrate)
 #elif defined ( ATMEGA_USART0 )
     /* Set baud rate */
     if ( baudrate & 0x8000 ) {
-        UART0_STATUS = (1<<U2X0);  // Enable 2x speed 
+        UART0_STATUS = (1<<U2X0);  // Enable 2x speed
         baudrate &= ~0x8000;
     }
     UBRR0H = (unsigned char)(baudrate>>8);
@@ -321,7 +321,7 @@ void uart_init(unsigned int baudrate)
 
     /* Enable USART receiver and transmitter and receive complete interrupt */
     UART0_CONTROL = _BV(RXCIE0)|(1<<RXEN0)|(1<<TXEN0);
-    
+
     /* Set frame format: asynchronous, 8data, no parity, 1stop bit */
 #ifdef URSEL0
     UCSR0C = (1<<URSEL0)|(3<<UCSZ00);
@@ -332,7 +332,7 @@ void uart_init(unsigned int baudrate)
 #elif defined ( ATMEGA_UART )
     /* set baud rate */
     if ( baudrate & 0x8000 ) {
-        UART0_STATUS = (1<<U2X);  // Enable 2x speed 
+        UART0_STATUS = (1<<U2X);  // Enable 2x speed
         baudrate &= ~0x8000;
     }
     UBRRHI = (unsigned char)(baudrate>>8);
@@ -348,7 +348,7 @@ void uart_init(unsigned int baudrate)
 
 /*************************************************************************
 Function: uart_getc()
-Purpose:  return byte from ringbuffer  
+Purpose:  return byte from ringbuffer
 Returns:  lower byte:  received byte from ringbuffer
           higher byte: last receive error
 **************************************************************************/
@@ -363,7 +363,7 @@ unsigned int uart_getc(void)
 
     /* calculate /store buffer index */
     tmptail = (UART_RxTail + 1) & UART_RX_BUFFER_MASK;
-    UART_RxTail = tmptail; 
+    UART_RxTail = tmptail;
 
     /* get data from receive buffer */
     data = UART_RxBuf[tmptail];
@@ -377,18 +377,18 @@ unsigned int uart_getc(void)
 Function: uart_putc()
 Purpose:  write byte to ringbuffer for transmitting via UART
 Input:    byte to be transmitted
-Returns:  none          
+Returns:  none
 **************************************************************************/
 void uart_putc(unsigned char data)
 {
     unsigned char tmphead;
 
     tmphead  = (UART_TxHead + 1) & UART_TX_BUFFER_MASK;
-    
+
     while ( tmphead == UART_TxTail ) {
         ;/* wait for free space in buffer */
     }
-    
+
     UART_TxBuf[tmphead] = data;
     UART_TxHead = tmphead;
 
@@ -402,7 +402,7 @@ void uart_putc(unsigned char data)
 Function: uart_puts()
 Purpose:  transmit string to UART
 Input:    string to be transmitted
-Returns:  none          
+Returns:  none
 **************************************************************************/
 void uart_puts(const char *s )
 {
@@ -422,7 +422,7 @@ Returns:  none
 void uart_puts_p(const char *progmem_s )
 {
     register char c;
-    
+
     while ( ( c = pgm_read_byte(progmem_s++) ) ) {
         uart_putc(c);
     }
@@ -446,14 +446,14 @@ Purpose:  called when the UART1 has received a character
     unsigned char usr;
     unsigned char lastRxError;
 
-    /* read UART status register and UART data register */ 
+    /* read UART status register and UART data register */
     usr  = UART1_STATUS;
     data = UART1_DATA;
 
     /* */
     lastRxError = (usr & (_BV(FE1)|_BV(DOR1)) );
 
-    /* calculate buffer index */ 
+    /* calculate buffer index */
     tmphead = ( UART1_RxHead + 1) & UART_RX_BUFFER_MASK;
 
     if ( tmphead == UART1_RxTail ) {
@@ -505,7 +505,7 @@ void uart1_init(unsigned int baudrate)
 
     /* Set baud rate */
     if ( baudrate & 0x8000 ) {
-        UART1_STATUS = (1<<U2X1);  //Enable 2x speed 
+        UART1_STATUS = (1<<U2X1);  //Enable 2x speed
         baudrate &= ~0x8000;
     }
     UBRR1H = (unsigned char)(baudrate>>8);
@@ -513,8 +513,8 @@ void uart1_init(unsigned int baudrate)
 
     /* Enable USART receiver and transmitter and receive complete interrupt */
     UART1_CONTROL = _BV(RXCIE1)|(1<<RXEN1)|(1<<TXEN1);
-    
-    /* Set frame format: asynchronous, 8data, no parity, 1stop bit */   
+
+    /* Set frame format: asynchronous, 8data, no parity, 1stop bit */
 #ifdef URSEL1
     UCSR1C = (1<<URSEL1)|(3<<UCSZ10);
 #else
@@ -526,7 +526,7 @@ void uart1_init(unsigned int baudrate)
 
 /*************************************************************************
 Function: uart1_getc()
-Purpose:  return byte from ringbuffer  
+Purpose:  return byte from ringbuffer
 Returns:  lower byte:  received byte from ringbuffer
           higher byte: last receive error
 **************************************************************************/
@@ -541,7 +541,7 @@ unsigned int uart1_getc(void)
 
     /* calculate /store buffer index */
     tmptail = (UART1_RxTail + 1) & UART_RX_BUFFER_MASK;
-    UART1_RxTail = tmptail; 
+    UART1_RxTail = tmptail;
 
     /* get data from receive buffer */
     data = UART1_RxBuf[tmptail];
@@ -555,7 +555,7 @@ unsigned int uart1_getc(void)
 Function: uart1_putc()
 Purpose:  write byte to ringbuffer for transmitting via UART
 Input:    byte to be transmitted
-Returns:  none          
+Returns:  none
 **************************************************************************/
 void uart1_putc(unsigned char data)
 {
@@ -580,7 +580,7 @@ void uart1_putc(unsigned char data)
 Function: uart1_puts()
 Purpose:  transmit string to UART1
 Input:    string to be transmitted
-Returns:  none          
+Returns:  none
 **************************************************************************/
 void uart1_puts(const char *s )
 {

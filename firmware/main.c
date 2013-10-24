@@ -19,13 +19,13 @@
 
   Brautomat AVR firmware
 
-  Autor: Andreas Weber 
+  Autor: Andreas Weber
   src: https://github.com/Andy1978/Brautomat
   changelog: 02.03.2013 angelegt
-             06.04.2013 aw: PT100 nun über Wheatstone Brücke einlesen und DS18B20 
+             06.04.2013 aw: PT100 nun über Wheatstone Brücke einlesen und DS18B20
              22.10.2013 aw: PT100 entfernt, nur noch DS18B20
 
-  Infos:  
+  Infos:
   H-Brücken PWM Treiber IR2104
   IN obere Halbbrücke PD4, OC1B
   /SD obere Halbbrücke PD6
@@ -39,7 +39,7 @@
   C           grün        0-Stellung kurz gegen MAsse
   B
   A           orange      Motor langsam gegen Masse/Gehäuse
-   
+
   Relais für Heizung: PB3
 
   Maxim DS18B20 an PA6, externe Versorgung 4,7k Pull-Up
@@ -47,7 +47,7 @@
   LCD:
   S99.5°C  I77.3°C
   RH....
-   
+
   Buchstaben in der unteren Zeile sind die Bits in s_status.enable
   Bit 0, R: Temperaturregelung aktiv
   Bit 1, H: Heizung eingeschaltet
@@ -164,7 +164,7 @@ void update_lcd(void)
   lcd_puts_P(" S:");
   itoa(status.aktive_step,buf,10);
   lcd_puts(buf);
-  
+
   //verbleibende Zeit im Schritt in Sekunden
   sprintf(buf," Z:%5i",status.remaining_step_time);
   lcd_puts(buf);
@@ -175,7 +175,7 @@ void update_lcd(void)
   lcd_putc(' ');
   lcd_put_int(uart_error,3);
 */
-  
+
 }
 
 //ISR(TIMER0_COMP_vect, ISR_NOBLOCK) //1kHz
@@ -227,14 +227,14 @@ void processUART(void)
       {
         status.uart_error_cnt++;
         uart_error=((rx_tmp & 0xFF00) >> 8);
-      }  
+      }
     }
     //status.bits |= setvalues.bits;
     //Senden
     char* send=(char*)&status;
     for(i=0;i<sizeof(struct s_status);i++)
     {
-      uart_putc(send[i]); 
+      uart_putc(send[i]);
     }
   }
 }
@@ -259,13 +259,13 @@ int main(void)
   //Relais für Heizung
   DDRB |= _BV(PB3);
   PORTD |= _BV(PD6) | _BV(PD7);
-    
+
   /*** TIMER0 ***/
   OCR0=250;
   //CTC = Clear Timer on Compare match S.80
   //Normal port operation, OC0 disconnected
   //Prescaler=64 -> clk=250kHz
-  TCCR0 = _BV(WGM01) | _BV(CS01) | _BV(CS00); 
+  TCCR0 = _BV(WGM01) | _BV(CS01) | _BV(CS00);
   //On Compare match Interrupt Enable for timer 0
   TIMSK |= _BV(OCIE0);
 
@@ -279,19 +279,19 @@ int main(void)
 
   /*** ADC ***/
   //Prescaler 128 = 125kHz ADC Clock, AutoTrigger, Interrupts enable
-  ADCSRA = _BV(ADEN) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC) | _BV(ADIE); 
+  ADCSRA = _BV(ADEN) | _BV(ADPS0) | _BV(ADPS1) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC) | _BV(ADIE);
 
   //AVCC with external capacitor at AREF, internal 2.56V bandgap
   //siehe S. 215
-  ADMUX = (_BV(REFS0) | _BV(REFS1)) + 2;   
+  ADMUX = (_BV(REFS0) | _BV(REFS1)) + 2;
   //ADC in Free Running mode
-  SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0)); 
+  SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0));
 
   //DS18B20 an PA6
   ow_set_bus(&PINA,&PORTA,&DDRA,PA6);
 
   //enable global interrupts
-  sei();      
+  sei();
 
   for (;;)    /* main event loop */
     {

@@ -1,13 +1,13 @@
 /*************************************************************************
-Title:     UART addon-library 
-Author:    Martin Thomas <eversmith@heizung-thomas.de>   
+Title:     UART addon-library
+Author:    Martin Thomas <eversmith@heizung-thomas.de>
            http://www.siwawi.arubi.uni-kl.de/avr_projects
 Software:  AVR-GCC 3.3/3.4, Peter Fleury's UART-Library
 
 DESCRIPTION:
-    
+
 USAGE:
-    Refere to the header file uart_addon.h for a description of the routines. 
+    Refere to the header file uart_addon.h for a description of the routines.
 
 *************************************************************************/
 
@@ -62,8 +62,8 @@ Returns:  none
 void uart_puthex_nibble(const unsigned char b)
 {
 	unsigned char  c = b & 0x0f;
-	if ( c > 9 ) { 
-		c += 'A'-10; 
+	if ( c > 9 ) {
+		c += 'A'-10;
 	}
 	else {
 		c += '0';

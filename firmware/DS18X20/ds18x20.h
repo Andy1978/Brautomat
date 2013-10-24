@@ -81,7 +81,7 @@ extern "C" {
 #define DS18X20_DECIMAL_CHAR      '.'
 
 
-extern uint8_t DS18X20_find_sensor(uint8_t *diff, 
+extern uint8_t DS18X20_find_sensor(uint8_t *diff,
 	uint8_t id[]);
 extern uint8_t DS18X20_get_power_status(uint8_t id[]);
 extern uint8_t DS18X20_start_meas( uint8_t with_external,
@@ -96,7 +96,7 @@ extern uint8_t DS18X20_read_decicelsius( uint8_t id[],
 	int16_t *decicelsius );
 extern uint8_t DS18X20_read_decicelsius_single( uint8_t familycode,
 	int16_t *decicelsius );
-extern uint8_t DS18X20_format_from_decicelsius( int16_t decicelsius, 
+extern uint8_t DS18X20_format_from_decicelsius( int16_t decicelsius,
 	char s[], uint8_t n);
 #endif /* DS18X20_DECICELSIUS */
 
@@ -108,14 +108,14 @@ extern uint8_t DS18X20_read_maxres( uint8_t id[],
 	int32_t *temperaturevalue );
 extern uint8_t DS18X20_read_maxres_single( uint8_t familycode,
 	int32_t *temperaturevalue );
-extern uint8_t DS18X20_format_from_maxres( int32_t temperaturevalue, 
+extern uint8_t DS18X20_format_from_maxres( int32_t temperaturevalue,
 	char s[], uint8_t n);
 #endif /* DS18X20_MAX_RESOLUTION */
 
 
 #if DS18X20_EEPROMSUPPORT
 // write th, tl and config-register to scratchpad (config ignored on DS18S20)
-uint8_t DS18X20_write_scratchpad( uint8_t id[], 
+uint8_t DS18X20_write_scratchpad( uint8_t id[],
 	uint8_t th, uint8_t tl, uint8_t conf);
 // read scratchpad into array SP
 uint8_t DS18X20_read_scratchpad( uint8_t id[], uint8_t sp[], uint8_t n);

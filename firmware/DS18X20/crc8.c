@@ -12,17 +12,17 @@ uint8_t crc8( uint8_t *data, uint16_t number_of_bytes_in_data )
 	uint8_t  bit_counter;
 	uint8_t  b;
 	uint8_t  feedback_bit;
-	
+
 	crc = CRC8INIT;
 
 	for (loop_count = 0; loop_count != number_of_bytes_in_data; loop_count++)
 	{
 		b = data[loop_count];
-		
+
 		bit_counter = 8;
 		do {
 			feedback_bit = (crc ^ b) & 0x01;
-	
+
 			if ( feedback_bit == 0x01 ) {
 				crc = crc ^ CRC8POLY;
 			}
@@ -30,18 +30,18 @@ uint8_t crc8( uint8_t *data, uint16_t number_of_bytes_in_data )
 			if ( feedback_bit == 0x01 ) {
 				crc = crc | 0x80;
 			}
-		
+
 			b = b >> 1;
 			bit_counter--;
-		
+
 		} while (bit_counter > 0);
 	}
-	
+
 	return crc;
 }
 
 /*
-This code is from Colin O'Flynn - Copyright (c) 2002 
+This code is from Colin O'Flynn - Copyright (c) 2002
 only minor changes by M.Thomas 9/2004
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of

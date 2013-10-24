@@ -7,7 +7,7 @@
 	/SD obere Halbbrücke PD6
 	IN untere Halbbrücke PD5, OC1A
 	/SD untere Halbbrücke PD7
-		
+
 	Autor: Andreas Weber 20.12.2007
 
 **************************************************/
@@ -29,7 +29,7 @@ ISR(TIMER0_COMP_vect) //1kHz
 	static uint16_t count=0;
 	static uint8_t half_sec=0;
 	count++;
-	
+
 	if (count==1000)
 	{
 		PORTA ^= _BV(PA4) | _BV(PA5);
@@ -39,17 +39,17 @@ ISR(TIMER0_COMP_vect) //1kHz
 		{
 			minutes++;
 			seconds=0;
-		}	
+		}
 		if (minutes==60)
 		{
 			hours++;
 			minutes++;
-		}	
+		}
 		if (hours==24)
 		{
-			hours=0;	
-		}			
-		
+			hours=0;
+		}
+
 		char buffer[5];
 		lcd_gotoxy(2,1);
 		itoa(hours,buffer,10);
@@ -75,7 +75,7 @@ int main(void)
     minutes=strtol(p,&p,10);
     p++;
     seconds=strtol(p,&p,10);
-    
+
     DDRA |= _BV(PA4) | _BV(PA5);
 
 	/*** TIMER0 ***/
@@ -83,24 +83,24 @@ int main(void)
 	//CTC = Clear Timer on Compare match S.80
 	//Normal port operation, OC0 disconnected
 	//Prescaler=64 -> clk=250kHz
-	TCCR0 = _BV(WGM01) | _BV(CS01) | _BV(CS00); 
+	TCCR0 = _BV(WGM01) | _BV(CS01) | _BV(CS00);
 	//On Compare match Interrupt Enable for timer 0
 	TIMSK |= _BV(OCIE0);
 
 
 	/*** ADC ***/
 	//Prescaler 32 = 500Khz ADC Clock, AutoTrigger
-	ADCSRA = _BV(ADEN) | _BV(ADPS0) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC); 
+	ADCSRA = _BV(ADEN) | _BV(ADPS0) | _BV(ADPS2) | _BV(ADATE) | _BV(ADSC);
 	//Interne 2.56V Reference verwenden
 	//Multiplexer auf Kanal2 (Poti)
 	//nur 8bit, left adjusted
-	ADMUX = (_BV(REFS0) | _BV(REFS1) | _BV(ADLAR)) + 1; 	
+	ADMUX = (_BV(REFS0) | _BV(REFS1) | _BV(ADLAR)) + 1;
 	//ADC in Free Running mode
-	SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0));	
+	SFIOR &= ~(_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0));
 
 	//enable global interrupts
-    sei();			
-	
+    sei();
+
     for (;;)    /* main event loop */
     {
     }

@@ -1,15 +1,15 @@
-/* 
+/*
    DS18x20 Demo-Program
-   
+
    V 0.9.2, 2/2011
-   
+
    by Martin Thomas <eversmith@heizung-thomas.de>
    http://www.siwawi.arubi.uni-kl.de/avr-projects
-    
+
    features:
-   - DS18X20 and 1-Wire code is based on an example from Peter 
+   - DS18X20 and 1-Wire code is based on an example from Peter
      Dannegger
-   - uses Peter Fleury's uart-library which is very portable 
+   - uses Peter Fleury's uart-library which is very portable
    - additional functions not found in the  uart-lib available
      in uart.h/.c
    - CRC-check based on code from Colin O'Flynn
@@ -17,12 +17,12 @@
    - example how to address every sensor in the bus by ROM-code
    - independant of system-timers (more portable) but some
      (very short) delays used
-   - avr-libc's stdint.h in use 
+   - avr-libc's stdint.h in use
    - no central include-file, parts of the code can be used as
      "library" easily
    - verbose output example
    - one-wire-bus can be changed at runtime if OW_ONE_BUS
-     is not defined in onewire.h. There are still minor timing 
+     is not defined in onewire.h. There are still minor timing
      issues when using the dynamic bus-mode
    - example on read/write of DS18x20 internal EEPROM
 */
@@ -67,33 +67,33 @@ static uint8_t search_sensors(void)
 	uint8_t i;
 	uint8_t id[OW_ROMCODE_SIZE];
 	uint8_t diff, nSensors;
-	
+
 	uart_puts_P( NEWLINESTR "Scanning Bus for DS18X20" NEWLINESTR );
-	
+
 	ow_reset();
 
 	nSensors = 0;
-	
+
 	diff = OW_SEARCH_FIRST;
 	while ( diff != OW_LAST_DEVICE && nSensors < MAXSENSORS ) {
 		DS18X20_find_sensor( &diff, &id[0] );
-		
+
 		if( diff == OW_PRESENCE_ERR ) {
 			uart_puts_P( "No Sensor found" NEWLINESTR );
 			break;
 		}
-		
+
 		if( diff == OW_DATA_ERR ) {
 			uart_puts_P( "Bus Error" NEWLINESTR );
 			break;
 		}
-		
+
 		for ( i=0; i < OW_ROMCODE_SIZE; i++ )
 			gSensorIDs[nSensors][i] = id[i];
-		
+
 		nSensors++;
 	}
-	
+
 	return nSensors;
 }
 
@@ -132,16 +132,16 @@ static void th_tl_dump(uint8_t *sp)
 	DS18X20_read_scratchpad( &gSensorIDs[0][0], sp, DS18X20_SP_SIZE );
 	uart_puts_P( "TH/TL in scratchpad of sensor 1 now : " );
 	uart_put_int( sp[DS18X20_TH_REG] );
-	uart_puts_P( " / " ); 
+	uart_puts_P( " / " );
 	uart_put_int( sp[DS18X20_TL_REG] );
-	uart_puts_P( NEWLINESTR ); 
+	uart_puts_P( NEWLINESTR );
 }
 
 static void eeprom_test(void)
 {
 	uint8_t sp[DS18X20_SP_SIZE], th, tl;
-	
-	uart_puts_P( NEWLINESTR "DS18x20 EEPROM support test for first sensor" NEWLINESTR ); 
+
+	uart_puts_P( NEWLINESTR "DS18x20 EEPROM support test for first sensor" NEWLINESTR );
 	// DS18X20_eeprom_to_scratchpad(&gSensorIDs[0][0]); // already done at power-on
 	th_tl_dump( sp );
 	th = sp[DS18X20_TH_REG];
@@ -174,22 +174,22 @@ int main( void )
 	uint8_t nSensors, i;
 	int16_t decicelsius;
 	uint8_t error;
-	
+
 	uart_init((UART_BAUD_SELECT((BAUD),F_CPU)));
-	
+
 #ifndef OW_ONE_BUS
 	ow_set_bus(&PINA,&PORTA,&DDRA,PA6);
 #endif
-	
+
 	sei();
-	
+
 	uart_puts_P( NEWLINESTR "DS18X20 1-Wire-Reader Demo by Martin Thomas" NEWLINESTR );
 	uart_puts_P(            "-------------------------------------------" );
-	
+
 	nSensors = search_sensors();
 	uart_put_int( (int)nSensors );
 	uart_puts_P( " DS18X20 Sensor(s) available:" NEWLINESTR );
-	
+
 #if DS18X20_VERBOSE
 	for (i = 0; i < nSensors; i++ ) {
 		uart_puts_P("# in Bus :");
@@ -199,7 +199,7 @@ int main( void )
 		uart_puts_P( NEWLINESTR );
 	}
 #endif
-		
+
 	for ( i = 0; i < nSensors; i++ ) {
 		uart_puts_P( "Sensor# " );
 		uart_put_int( (int)i+1 );
@@ -216,11 +216,11 @@ int main( void )
 		if ( DS18X20_get_power_status( &gSensorIDs[i][0] ) == DS18X20_POWER_PARASITE ) {
 			uart_puts_P( "parasite" );
 		} else {
-			uart_puts_P( "externally" ); 
+			uart_puts_P( "externally" );
 		}
 		uart_puts_P( " powered" NEWLINESTR );
 	}
-	
+
 #if DS18X20_EEPROMSUPPORT
 	if ( nSensors > 0 ) {
 		eeprom_test();
@@ -229,7 +229,7 @@ int main( void )
 
 	if ( nSensors == 1 ) {
 		uart_puts_P( NEWLINESTR "There is only one sensor "
-		             "-> Demo of \"DS18X20_read_decicelsius_single\":" NEWLINESTR ); 
+		             "-> Demo of \"DS18X20_read_decicelsius_single\":" NEWLINESTR );
 		i = gSensorIDs[0][0]; // family-code for conversion-routine
 		DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL );
 		_delay_ms( DS18B20_TCONV_12BIT );
@@ -237,25 +237,25 @@ int main( void )
 		uart_put_temp( decicelsius );
 		uart_puts_P( NEWLINESTR );
 	}
-		
-	
+
+
 	for(;;) {   // main loop
-	
+
 		error = 0;
 
 		if ( nSensors == 0 ) {
 			error++;
 		}
 
-		uart_puts_P( NEWLINESTR "Convert_T and Read Sensor by Sensor (reverse order)" NEWLINESTR ); 
+		uart_puts_P( NEWLINESTR "Convert_T and Read Sensor by Sensor (reverse order)" NEWLINESTR );
 		for ( i = nSensors; i > 0; i-- ) {
-			if ( DS18X20_start_meas( DS18X20_POWER_PARASITE, 
+			if ( DS18X20_start_meas( DS18X20_POWER_PARASITE,
 				&gSensorIDs[i-1][0] ) == DS18X20_OK ) {
 				_delay_ms( DS18B20_TCONV_12BIT );
 				uart_puts_P( "Sensor# " );
 				uart_put_int( (int) i );
 				uart_puts_P(" = ");
-				if ( DS18X20_read_decicelsius( &gSensorIDs[i-1][0], &decicelsius) 
+				if ( DS18X20_read_decicelsius( &gSensorIDs[i-1][0], &decicelsius)
 				     == DS18X20_OK ) {
 					uart_put_temp( decicelsius );
 				} else {
@@ -269,9 +269,9 @@ int main( void )
 				error++;
 			}
 		}
-		
+
 		uart_puts_P( NEWLINESTR "Convert_T for all Sensors and Read Sensor by Sensor" NEWLINESTR );
-		if ( DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL ) 
+		if ( DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL )
 			== DS18X20_OK) {
 			_delay_ms( DS18B20_TCONV_12BIT );
 			for ( i = 0; i < nSensors; i++ ) {
@@ -316,7 +316,7 @@ int main( void )
 
 #if DS18X20_VERBOSE
 		// all devices:
-		uart_puts_P( NEWLINESTR "Verbose output" NEWLINESTR ); 
+		uart_puts_P( NEWLINESTR "Verbose output" NEWLINESTR );
 		DS18X20_start_meas( DS18X20_POWER_PARASITE, NULL );
 		_delay_ms( DS18B20_TCONV_12BIT );
 		DS18X20_read_meas_all_verbose();
@@ -330,6 +330,6 @@ int main( void )
 			error = 0;
 		}
 
-		_delay_ms(3000); 
+		_delay_ms(3000);
 	}
 }

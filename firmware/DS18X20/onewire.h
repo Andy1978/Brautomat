@@ -13,8 +13,8 @@ extern "C" {
 
 /* Define OW_ONE_BUS if only one 1-Wire-Bus is used
    in the application -> shorter code.
-   If not defined make sure to call ow_set_bus() before using 
-   a bus. Runtime bus-select increases code size by around 300 
+   If not defined make sure to call ow_set_bus() before using
+   a bus. Runtime bus-select increases code size by around 300
    bytes so use OW_ONE_BUS if possible */
 // #define OW_ONE_BUS
 
@@ -26,9 +26,9 @@ extern "C" {
 #define OW_DDR  DDRD
 #define OW_CONF_DELAYOFFSET 0
 
-#else 
+#else
 #if ( F_CPU < 1843200 )
-#warning | Experimental multi-bus-mode is not tested for 
+#warning | Experimental multi-bus-mode is not tested for
 #warning | frequencies below 1,84MHz. Use OW_ONE_WIRE or
 #warning | faster clock-source (i.e. internal 2MHz R/C-Osc.).
 #endif
@@ -36,7 +36,7 @@ extern "C" {
 #define OW_CONF_DELAYOFFSET ( (uint16_t)( ((OW_CONF_CYCLESPERACCESS) * 1000000L) / F_CPU ) )
 #endif
 
-// Recovery time (T_Rec) minimum 1usec - increase for long lines 
+// Recovery time (T_Rec) minimum 1usec - increase for long lines
 // 5 usecs is a value give in some Maxim AppNotes
 // 30u secs seem to be reliable for longer lines
 //#define OW_RECOVERY_TIME        5  /* usec */
@@ -45,7 +45,7 @@ extern "C" {
 
 // Use AVR's internal pull-up resistor instead of external 4,7k resistor.
 // Based on information from Sascha Schade. Experimental but worked in tests
-// with one DS18B20 and one DS18S20 on a rather short bus (60cm), where both 
+// with one DS18B20 and one DS18S20 on a rather short bus (60cm), where both
 // sensores have been parasite-powered.
 #define OW_USE_INTERNAL_PULLUP     1  /* 0=external, 1=internal */
 
