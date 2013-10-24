@@ -85,9 +85,10 @@ struct s_setvalues
   float temperature_set_point;  //Solltemperatur [°C]
   uint8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
   uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
-  float step_temp[5];           //Temperatur in der Schrittkette
-  uint16_t step_time[5];        //Dauer Schritt
-  uint8_t  bits;
+  float step_temp[MAX_STEPS];   //Temperatur in der Schrittkette [°C]
+  float dT_dt[MAX_STEPS];       //Temperaturanstieg [°C/min]
+  uint16_t step_time[MAX_STEPS];//Dauer Schritt [s]
+  uint8_t	 bits;
   //Bit 0 A: Temperaturregelung aktiv (Handbetrieb wenn nicht)
   //Bit 1 M: Heizung aktiv im Handbetrieb
   //Bit 2 S: Temperatursollwerte aus Schrittkette

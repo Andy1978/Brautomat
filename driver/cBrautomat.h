@@ -28,7 +28,11 @@
 #include <stdlib.h>
 #include <unistd.h> //für usleep
 #include <math.h>
+#include <cstdio>   //für remove
+#include <cerrno>   //für errno
 #include "serial.h"
+
+using namespace libconfig;
 
 typedef unsigned short uint16_t;
 typedef short int16_t;
@@ -46,7 +50,7 @@ struct s_status
   uint8_t	 bits;
   //Bit 0: Heizung aktiv
   uint8_t uart_error;
-  uint8_t last_uart_error;      //UART_FRAME_ERROR=8, ART_OVERRUN_ERROR=4, BUFFER_OVERFLOW=2  
+  uint8_t last_uart_error;      //UART_FRAME_ERROR=8, ART_OVERRUN_ERROR=4, BUFFER_OVERFLOW=2
 } __attribute__((__packed__));
 
 struct s_setvalues
@@ -54,8 +58,9 @@ struct s_setvalues
   float temperature_set_point;  //Solltemperatur [°C]
   uint8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
   uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
-  float step_temp[MAX_STEPS];           //Temperatur in der Schrittkette
-  uint16_t step_time[MAX_STEPS];        //Dauer Schritt
+  float step_temp[MAX_STEPS];   //Temperatur in der Schrittkette [°C]
+  float dT_dt[MAX_STEPS];       //Temperaturanstieg [°C/min]
+  uint16_t step_time[MAX_STEPS];//Dauer Schritt [s]
   uint8_t	 bits;
   //Bit 0: Temperaturregelung aktiv (Handbetrieb wenn nicht)
   //Bit 1: Heizung aktiv im Handbetrieb
@@ -72,7 +77,7 @@ public:
   //AVR relevant
   s_status status;
   s_setvalues setvalues;
-  
+
   //Allgemein
   string profile_name;
 
@@ -80,7 +85,7 @@ public:
   void print_status();
   void print_steps();
   void update();
-  
+
   int load_cfg(const char* filename);
   int save_cfg(const char* filename);
 

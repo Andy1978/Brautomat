@@ -91,7 +91,7 @@ void cBrautomat::_set_servos(float pos1, float pos2)
 
     setvalues.enable |= 0x03;		//PWM Freigabe für beide Servos
     update();
-    setvalues.enable &= 0xFC;		
+    setvalues.enable &= 0xFC;
 	update();
 }
 
@@ -128,7 +128,7 @@ void cBrautomat::set_QWP_rotation(double rot)
 		if(DEBUG)
 			cout << "using " << rot << " as new value" << endl;
 	}
-		
+
 	setvalues.qwp_pos=_qwp_deg_to_cnt(rot);
 	setvalues.enable |= 1<<2;
 	update();
@@ -144,33 +144,28 @@ int cBrautomat::load_cfg(const char* filename)
   try
     {
       cfg.readFile(filename);
-      cfg.lookupValue("version", pattern_version);
-      cfg.lookupValue("comment", pattern_comment);
-      cfg.lookupValue("author", pattern_author);
+      cfg.lookupValue("profile_name", profile_name);
 
-      Setting &period = cfg.lookup("pattern.period");
-      Setting &angle  = cfg.lookup("pattern.angle");
-      Setting &phase  = cfg.lookup("pattern.phase");
-      if(    (period.getLength() != angle.getLength())
-             || (phase.getLength()  != angle.getLength())
-             || (angle.getLength()  != phase.getLength()))
+      Setting &step_temp = cfg.lookup("temp_profile.step_temp");
+      Setting &dT_dt  = cfg.lookup("temp_profile.dT_dt");
+      Setting &step_time  = cfg.lookup("temp_profile.step_time");
+      if(    (step_temp.getLength() != dT_dt.getLength())
+             || (dT_dt.getLength()  != step_time.getLength())
+             || (step_time.getLength()  != step_temp.getLength()))
         {
-          cerr << "error: length of period, angle and phase have to be equal\\n" << endl;;
+          cerr << "error: length of step_temp, dT_dt and step_time has to be equal\\n" << endl;;
           return -1;
         }
-
-      //clear the vectors
-      pattern_periods.clear();
-      pattern_angles.clear();
-      pattern_phases.clear();
-
-      int cnt = period.getLength();
-      cout << "INFO: num patterns read = "<< cnt << endl;
-      for (int i=0; i<cnt; ++i)
+      if(step_temp.getLength() != MAX_STEPS)
         {
-          pattern_periods.push_back(double(period[i]));
-          pattern_angles.push_back(double(angle[i]));
-          pattern_phases.push_back(double(phase[i]));
+          cerr << "error: length of step_temp, dT_dt and step_time has to be \\n" << MAX_STEPS << endl;;
+          return -1;
+        }
+      for (int i=0; i<MAX_STEPS; ++i)
+        {
+          setvalues.step_temp[i] = float(step_temp[i]);
+          setvalues.dT_dt[i]     = float(dT_dt[i]);
+          setvalues.step_time[i] = float(step_time[i]);
         }
     }
   catch (FileIOException &fioex) //file does not exist or parse error
@@ -200,19 +195,17 @@ int cBrautomat::save_cfg(const char* filename)
     {
       Config cfg;
       Setting &root = cfg.getRoot();
-      root.add("version", Setting::TypeString) = pattern_version;
-      root.add("comment", Setting::TypeString) = pattern_comment;
-      root.add("author", Setting::TypeString)  = pattern_author;
-      Setting &pattern = root.add("pattern", Setting::TypeGroup);
-      Setting &period  = pattern.add("period", Setting::TypeArray);
-      Setting &angle   = pattern.add("angle", Setting::TypeArray);
-      Setting &phase   = pattern.add("phase", Setting::TypeArray);
+      root.add("profile_name", Setting::TypeString) = profile_name;
+      Setting &temp_profile = root.add("temp_profile", Setting::TypeGroup);
+      Setting &step_temp    = temp_profile.add("step_temp", Setting::TypeArray);
+      Setting &dT_dt        = temp_profile.add("dT_dt", Setting::TypeArray);
+      Setting &step_time    = temp_profile.add("step_time", Setting::TypeArray);
 
-      for (unsigned int i=0; i<pattern_periods.size(); ++i)
+      for (unsigned int i=0; i<MAX_STEPS; ++i)
         {
-          period.add(Setting::TypeFloat) = pattern_periods[i];
-          angle.add(Setting::TypeFloat)  = pattern_angles[i];
-          phase.add(Setting::TypeFloat)  = pattern_phases[i];
+          step_temp.add(Setting::TypeFloat) = setvalues.step_temp[i];
+          dT_dt.add(Setting::TypeFloat)     = setvalues.dT_dt[i];
+          step_time.add(Setting::TypeFloat) = setvalues.step_time[i];
         }
       cfg.writeFile(filename);
     }
