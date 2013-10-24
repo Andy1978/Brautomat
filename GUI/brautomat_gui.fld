@@ -1,11 +1,21 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0300 
+version 1.0302 
 header_name {.h} 
 code_name {.cxx}
 decl {\#include "../driver/cBrautomat.h"} {public global
 } 
 
 decl {\#include "Spreadsheet.h"} {public global
+} 
+
+decl {cBrautomat *myBrautomat = NULL;} {private local
+} 
+
+Function {close_cb(Fl_Widget*, void*)} {open return_type void
+} {
+  code {delete myBrautomat;
+exit(0);} {selected
+  }
 } 
 
 Function {} {open
@@ -80,7 +90,7 @@ Function {} {open
         xywh {200 40 40 30}
       }
       Fl_Value_Slider sl_temperatur {
-        label Solltemperatur selected
+        label Solltemperatur
         xywh {155 95 225 25} type {Horz Knob} align 5 maximum 100 step 0.5 value 20
       }
       Fl_Check_Button {} {
@@ -132,7 +142,10 @@ Function {} {open
       }
     }
   }
-  code {// Table rows
+  code {mainwin->callback(close_cb);
+myBrautomat = new cBrautomat("/dev/ttyUSB0");
+
+// Table rows
   temp_profile->row_header(1);
   temp_profile->row_header_width(70);
   temp_profile->row_resize(1);

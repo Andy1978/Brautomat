@@ -17,6 +17,32 @@
 
 /*
   Brautomat driver class PC<->AVR communication
+
+  Temperaturprofil: Es gibt 3 Werte:
+
+  step_time:
+    Nach Ablauf dieser Zeit wird der nächste Schritt aktiviert.
+    Ist step_time = 0, so wird durch step_temp(siehe dort) weiter geschaltet.
+  dT/dt:
+    Anstieg der Solltemperatur
+  step_temp
+    Bei Überschreiten (dT/dt>0) oder Unterschreiten (dT/dt<0)
+    dieser Temperatur wird der nächste Schritt aktiviert.
+    Ist dT/dt=0 so wird nur anhand step_time weiter geschaltet
+
+  Ein typisches Profil wäre z.B.
+  step_time dT/dt step_temp Erklärung
+  0         30    50        schnelles Aufwärmen des Wassers bis 50°C
+  600       0     50        Einmaischen + 1.Rast
+  0         1     62        Aufheizen 2
+  1800      0     62        2. Rast
+  0         1     72        Aufheizen 3
+  1800      0     72        3. Rast
+  0         1     78        Aufheizen auf Läutertemperatur
+  0         0     78        läuft für immer
+
+  Plausibilitätsprüfung
+  * Wenn dT/dt=0, muss step_time des vorherigen Schritts gleich der des aktuellen Schrittes sein
 */
 
 #ifndef _C_BRAUTOMAT_H
@@ -39,8 +65,8 @@ typedef short int16_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
 
-#define DEBUG 0
-#define MAX_STEPS 5
+#define DEBUG 1
+#define MAX_STEPS 10
 
 struct s_status
 {
@@ -60,7 +86,7 @@ struct s_setvalues
   uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
   float step_temp[MAX_STEPS];   //Temperatur in der Schrittkette [°C]
   float dT_dt[MAX_STEPS];       //Temperaturanstieg [°C/min]
-  uint16_t step_time[MAX_STEPS];//Dauer Schritt [s]
+  uint16_t step_time[MAX_STEPS]; //Dauer Schritt [s]
   uint8_t	 bits;
   //Bit 0: Temperaturregelung aktiv (Handbetrieb wenn nicht)
   //Bit 1: Heizung aktiv im Handbetrieb
@@ -73,6 +99,7 @@ class cBrautomat
 {
 public:
   cBrautomat(const char* device);
+  ~cBrautomat();
 
   //AVR relevant
   s_status status;

@@ -22,9 +22,16 @@ cBrautomat::cBrautomat(const char* device)
 {
   //serial.open(device,B57600);
   //serial.open(device,B115200);
+  std::cout << "opening serial port " << device << endl;
   serial.open(device,B38400);
   memset(&setvalues,0,sizeof(setvalues));
-  //_set_servos(0,0);
+}
+
+cBrautomat::~cBrautomat()
+{
+  std::cout << "closing serial port" << endl;
+  serial.close();
+  std::cout << "Goodbye" << endl;
 }
 
 void cBrautomat::update()
@@ -37,14 +44,17 @@ void cBrautomat::update()
   //jetzt mindestens (37+10)/(115200/8) warten (37bytes zum AVR senden, 10Bytes Antwort)
   unsigned int retry_cnt=0;
   const unsigned int max_retry=5;
+  unsigned int received_bytes = 0;
   do
     {
       usleep(30000);
-      ret = serial.readData((char*)&status, sizeof(s_status));
+      int request_size = sizeof(s_status)-int(received_bytes);
+      ret = serial.readData((char*)&status+received_bytes, request_size);
+      received_bytes += ret;
       if(DEBUG)
-        std::cout << "got "<< ret << " bytes..." << std::endl;
+        std::cout << "got "<< ret << " bytes out of requested " << request_size << "..." << std::endl;
     }
-  while (ret<sizeof(s_status) && ++retry_cnt<max_retry);
+  while (received_bytes<sizeof(s_status) && ++retry_cnt<max_retry);
   if(retry_cnt==max_retry)
     {
       std::cerr << "cBrautomat::update(), max retry count überschritten, keine Antwort" << endl;
@@ -74,10 +84,13 @@ void cBrautomat::print_status()
 
 void cBrautomat::print_steps()
 {
-  for(int i=0; i<5; i++)
+  std::cout << "Schritt:\t" << "dT/dt:\t" << "Schrittdauer:\t"<< " Solltemperatur:\t" << std::endl;
+  for(int i=0; i<MAX_STEPS; i++)
     {
-      std::cout << "Schritt:" << i << " Solltemp. = " << setvalues.step_temp[i];
-      std::cout << ", Schrittdauer = " << setvalues.step_time[i] << "s" << std::endl;
+      std::cout << i << "\t\t"
+        << setvalues.step_time[i] << " s\t"
+        << setvalues.dT_dt[i] << " °C/min\t\t"
+        << setvalues.step_temp[i] << " °C" << std::endl;
     }
 }
 

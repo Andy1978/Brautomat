@@ -67,6 +67,8 @@
 #include "onewire.h"
 #include "ds18x20.h"
 
+#define MAX_STEPS 10
+
 //Telegramm AVR zum PC
 struct s_status
 {
@@ -87,7 +89,7 @@ struct s_setvalues
   uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
   float step_temp[MAX_STEPS];   //Temperatur in der Schrittkette [°C]
   float dT_dt[MAX_STEPS];       //Temperaturanstieg [°C/min]
-  uint16_t step_time[MAX_STEPS];//Dauer Schritt [s]
+  uint16_t step_time[MAX_STEPS]; //Dauer Schritt [s]
   uint8_t	 bits;
   //Bit 0 A: Temperaturregelung aktiv (Handbetrieb wenn nicht)
   //Bit 1 M: Heizung aktiv im Handbetrieb
@@ -98,8 +100,6 @@ struct s_setvalues
 
 #define UART_BAUD_RATE 38400
 //#define UART_BAUD_RATE 115200
-#define MAXSENSORS 5
-#define NEWLINESTR "\r\n"
 #define OW_ONE_BUS
 
 volatile struct s_status status;
