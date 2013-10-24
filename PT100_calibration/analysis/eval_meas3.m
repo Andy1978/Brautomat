@@ -7,7 +7,7 @@
 d=load("../captures/100deg_3.log");
 R4=d(:,3);
 
-## Von Hand aufgezeichnete Messung mit "huber precision thermometer D150" 
+## Von Hand aufgezeichnete Messung mit "huber precision thermometer D150"
 dm=load("../captures/huber_D150_3.log");
 
 Rl=0; #Leitungswiderstand
@@ -39,7 +39,7 @@ if (opt)
   #f=@(x) sumsq(abs(ds-adc2t(x(1),x(2),x(3),pt100,x(4))))
   f=@(x) sumsq(abs(ds-adc2t(R1,R2,x(2),pt100-x(1),x(3))))
   [X, OBJ, INFO, ITER, NF, LAMBDA] = sqp (X0, f)
-  
+
   T=adc2t (R1, R2, X0(2), R4-X0(1), X0(3));
   plot(d(:,1)-tstart,d(:,2),";DS18B20;",d(:,1)-tstart,T,";uncal. PT100 Temp;",dm(:,1)-tstart,dm(:,2),"-x;manual DS150;");
 endif

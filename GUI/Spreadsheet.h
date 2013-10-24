@@ -115,13 +115,13 @@ void Spreadsheet::draw_cell(TableContext context, int R,int C, int X,int Y,int W
         switch (C)
           {
           case 0:
-            fl_draw("Dauer[s]", X,Y,W,H, FL_ALIGN_CENTER);
+            fl_draw("Dauer [s]", X,Y,W,H, FL_ALIGN_CENTER);
             break;
           case 1:
-            fl_draw("dT/dt", X,Y,W,H, FL_ALIGN_CENTER);
+            fl_draw("dT/dt [°C/min]", X,Y,W,H, FL_ALIGN_CENTER);
             break;
           case 2:
-            fl_draw("Endtemperatur", X,Y,W,H, FL_ALIGN_CENTER);
+            fl_draw("T_Ziel [°C]", X,Y,W,H, FL_ALIGN_CENTER);
             break;
           }
 

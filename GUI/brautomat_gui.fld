@@ -1,19 +1,22 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0302 
+version 1.0300 
 header_name {.h} 
 code_name {.cxx}
+decl {\#include "../driver/cBrautomat.h"} {public global
+} 
+
 decl {\#include "Spreadsheet.h"} {public global
 } 
 
 Function {} {open
 } {
   Fl_Window mainwin {
-    label {Brauautomat GUI v0.0.2} open selected
-    xywh {1074 74 675 850} type Double resizable size_range {675 850 1000 1000} visible
+    label {Brauautomat GUI v0.0.2} open
+    xywh {179 53 600 800} type Double hide resizable size_range {600 800 1000 1000}
   } {
     Fl_Button {} {
       label Upload
-      xywh {445 205 85 25}
+      xywh {480 475 85 25}
     }
     Fl_Group {} {
       label {Rührwerk} open
@@ -54,33 +57,7 @@ Function {} {open
     }
     Fl_Button {} {
       label Download
-      xywh {445 235 85 25}
-    }
-    Fl_Button {} {
-      label test
-      callback {temp_profile->rows(5);
-temp_profile->cols(5);
-
-    temp_profile->selection_color(FL_YELLOW);
-    temp_profile->when(FL_WHEN_RELEASE|FL_WHEN_CHANGED);
-    temp_profile->table_box(FL_NO_BOX);
-    temp_profile->col_resize_min(4);
-    temp_profile->row_resize_min(4);
-
-    // ROWS
-    temp_profile->row_header(1);
-    temp_profile->row_header_width(60);
-    temp_profile->row_resize(1);
-    temp_profile->rows(500);
-    temp_profile->row_height_all(20);
-
-    // COLS
-    temp_profile->cols(500);
-    temp_profile->col_header(1);
-    temp_profile->col_header_height(25);
-    temp_profile->col_resize(1);
-    temp_profile->col_width_all(80);}
-      xywh {445 290 95 25}
+      xywh {480 535 85 25}
     }
     Fl_Group {} {
       label {Heizung Sollwerte und Steuerung} open
@@ -103,7 +80,7 @@ temp_profile->cols(5);
         xywh {200 40 40 30}
       }
       Fl_Value_Slider sl_temperatur {
-        label Solltemperatur
+        label Solltemperatur selected
         xywh {155 95 225 25} type {Horz Knob} align 5 maximum 100 step 0.5 value 20
       }
       Fl_Check_Button {} {
@@ -130,28 +107,28 @@ temp_profile->cols(5);
     }
     Fl_Group {} {
       label Schritte open
-      xywh {10 395 640 415} box GTK_UP_BOX align 5
+      xywh {10 390 445 280} box GTK_UP_BOX align 5
     } {
       Fl_Table temp_profile {
         label Schrittparameter open
-        xywh {30 500 575 285} align 5
+        xywh {30 495 405 155} align 5
         class Spreadsheet
       } {}
       Fl_Value_Output {} {
-        label {aktiver Schritt}
-        xywh {125 410 25 25}
+        label {aktiver Schritt }
+        xywh {255 410 50 25}
       }
       Fl_Value_Output {} {
-        label {verbleibende Zeit im Schritt}
-        xywh {220 445 25 25}
+        label {verbleibende Zeit im Schritt [s] }
+        xywh {255 440 50 25}
       }
       Fl_Button {} {
         label {Schritt vor}
-        xywh {310 410 130 30}
+        xywh {320 410 115 30}
       }
       Fl_Button {} {
         label {Schritt zurück}
-        xywh {310 445 130 30}
+        xywh {320 440 115 30}
       }
     }
   }
@@ -166,5 +143,8 @@ temp_profile->cols(5);
   temp_profile->col_header_height(25);
   temp_profile->col_resize(1);
   temp_profile->cols(MAX_COLS);
-  temp_profile->col_width_all(90);} {}
+  
+  temp_profile->col_width(0, 90);
+  temp_profile->col_width(1, 120);
+  temp_profile->col_width(2, 120);} {}
 } 

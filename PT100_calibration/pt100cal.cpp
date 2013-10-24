@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string.h>
-#include <time.h> 
+#include <time.h>
 #include "../driver/cBrautomat.h"
 
 using namespace std;
