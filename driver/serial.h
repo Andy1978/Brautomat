@@ -22,21 +22,24 @@ class CSerial
 {
 
 public:
-	CSerial();
-	~CSerial();
+  CSerial();
+  ~CSerial();
 
-	//! mit der Baudrate speed verbinden. ACHTUNG: "B" voranstellen da Makro, z.B. B19200
-	int open(const char* device, int speed= B9600);
-	int close( void );
+  //! mit der Baudrate speed verbinden. ACHTUNG: "B" voranstellen da Makro, z.B. B19200
+  int open(const char* device, int speed= B9600);
+  int close( void );
 
-	int readData( void *, int);
-	int readDataBlocking( void *, int );
-	int sendData( const char*, int );
+  int readData( void *, int);
+  int readDataBlocking( void *, int );
+  int sendData( const char*, int );
 
-	int isOpened( void ){ return( m_fd >= 0 ? 1 : 0 ); }
+  int isOpened( void )
+  {
+    return( m_fd >= 0 ? 1 : 0 );
+  }
 
 protected:
-	int m_fd;
+  int m_fd;
 };
 
 #endif

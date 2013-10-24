@@ -9,7 +9,7 @@ using namespace std;
 int main()
 {
   cout << "Brautomat driver test by Andy" << endl;
-	cBrautomat myBrautomat("/dev/ttyUSB0");
+  cBrautomat myBrautomat("/dev/ttyUSB0");
 
   //testweise ein Temperaturprofil vorgeben
   myBrautomat.setvalues.step_temp[0]=50;
@@ -21,16 +21,16 @@ int main()
 
   myBrautomat.setvalues.temperature_set_point=56.7;
 
-	myBrautomat.update();
-	myBrautomat.print_setvalues();
-	myBrautomat.print_status();
-	sleep(1);
+  myBrautomat.update();
+  myBrautomat.print_setvalues();
+  myBrautomat.print_status();
+  sleep(1);
   cout << "*******************************" << endl;
-	myBrautomat.update();
-	myBrautomat.print_setvalues();
-	myBrautomat.print_status();
+  myBrautomat.update();
+  myBrautomat.print_setvalues();
+  myBrautomat.print_status();
 
-	return 0;
+  return 0;
 }
 
 

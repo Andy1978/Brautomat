@@ -90,8 +90,8 @@ public:
   int save_cfg(const char* filename);
 
 private:
-    CSerial serial;
-    char buffer[4096];
+  CSerial serial;
+  char buffer[4096];
 };
 
 #endif

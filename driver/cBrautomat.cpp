@@ -18,7 +18,7 @@
 #include "cBrautomat.h"
 
 cBrautomat::cBrautomat(const char* device)
-    :serial()
+  :serial()
 {
   //serial.open(device,B57600);
   //serial.open(device,B115200);
@@ -38,42 +38,43 @@ void cBrautomat::update()
   unsigned int retry_cnt=0;
   const unsigned int max_retry=5;
   do
-  {
-    usleep(30000);
-    ret = serial.readData((char*)&status, sizeof(s_status));
-    if(DEBUG)
-      std::cout << "got "<< ret << " bytes..." << std::endl;
-  }while (ret<sizeof(s_status) && ++retry_cnt<max_retry);
+    {
+      usleep(30000);
+      ret = serial.readData((char*)&status, sizeof(s_status));
+      if(DEBUG)
+        std::cout << "got "<< ret << " bytes..." << std::endl;
+    }
+  while (ret<sizeof(s_status) && ++retry_cnt<max_retry);
   if(retry_cnt==max_retry)
-  {
-    std::cerr << "cBrautomat::update(), max retry count überschritten, keine Antwort" << endl;
-    exit(-1);
-  }
+    {
+      std::cerr << "cBrautomat::update(), max retry count überschritten, keine Antwort" << endl;
+      exit(-1);
+    }
 
 }
 
 void cBrautomat::print_setvalues()
 {
-    std::cout << "Solltemperatur           = " << setvalues.temperature_set_point << std::endl;
-    std::cout << "Sollamplitude            = " << int(setvalues.amplitude_set_point) << std::endl;
-    std::cout << "Sollperiodendauer        = " << int(setvalues.period_set_point) << std::endl;
-    std::cout << "Temperaturregelung aktiv             = " << bool(setvalues.bits & 0x01) << std::endl;
-    std::cout << "Heizung aktiv im Handbetrieb         = " << bool(setvalues.bits & 0x02) << std::endl;
-    std::cout << "Temperatursollwerte aus Schrittkette = " << bool(setvalues.bits & 0x04) << std::endl;
-    print_steps();
+  std::cout << "Solltemperatur           = " << setvalues.temperature_set_point << std::endl;
+  std::cout << "Sollamplitude            = " << int(setvalues.amplitude_set_point) << std::endl;
+  std::cout << "Sollperiodendauer        = " << int(setvalues.period_set_point) << std::endl;
+  std::cout << "Temperaturregelung aktiv             = " << bool(setvalues.bits & 0x01) << std::endl;
+  std::cout << "Heizung aktiv im Handbetrieb         = " << bool(setvalues.bits & 0x02) << std::endl;
+  std::cout << "Temperatursollwerte aus Schrittkette = " << bool(setvalues.bits & 0x04) << std::endl;
+  print_steps();
 }
 
 void cBrautomat::print_status()
 {
-    std::cout << "Isttemperatur     = " << status.temperature << std::endl;
-    std::cout << "aktiver Schritt   = " << int(status.aktive_step) << std::endl;
-    std::cout << "verbleibende Zeit = " << int(status.remaining_step_time) << std::endl;
-    std::cout << "Heizung aktiv = " << bool(status.bits & 0x01) << std::endl;
+  std::cout << "Isttemperatur     = " << status.temperature << std::endl;
+  std::cout << "aktiver Schritt   = " << int(status.aktive_step) << std::endl;
+  std::cout << "verbleibende Zeit = " << int(status.remaining_step_time) << std::endl;
+  std::cout << "Heizung aktiv = " << bool(status.bits & 0x01) << std::endl;
 }
 
 void cBrautomat::print_steps()
 {
-    for(int i=0;i<5;i++)
+  for(int i=0; i<5; i++)
     {
       std::cout << "Schritt:" << i << " Solltemp. = " << setvalues.step_temp[i];
       std::cout << ", Schrittdauer = " << setvalues.step_time[i] << "s" << std::endl;
