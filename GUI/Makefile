@@ -15,5 +15,3 @@ brautomat_gui.cxx brautomat_gui.h: brautomat_gui.fld
 clean:
 	rm -f brautomat_gui brautomat_gui.cxx brautomat_gui.h
 
-brautomat_driver_test: brautomat_driver_test.o cBrautomat.o serial.o
-	g++ $(CFLAGS) -o brautomat_driver_test brautomat_driver_test.o cBrautomat.o serial.o $(LIBS)

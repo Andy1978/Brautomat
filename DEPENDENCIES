@@ -1,2 +1,9 @@
-ToDo: genauer beschreiben
-avr-gcc, arvlibc, fluid, fltk, octave
+=== Ubuntu 12.04.3 LTS ===
+sudo aptitude install gcc-avr avr-libc avrdude g++ libfltk1.3-dev fluid
+
+[libconfig++8-dev]
+(Ubuntu packaging bug, see https://github.com/harryhaaren/Luppp/issues/25#issuecomment-3811270)
+
+daher libconfig++ von source compiliert & installiert:
+wget http://www.hyperrealm.com/libconfig/libconfig-1.4.9.tar.gz
+tar xzf, configure, make, sudo make install, ldconfig...
