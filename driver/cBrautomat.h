@@ -71,6 +71,7 @@ typedef unsigned char uint8_t;
 struct s_status
 {
   float temperature;            //Isttemperatur [°C]
+  float temperature_set_point;  //Solltemperatur [°C]
   uint8_t aktive_step;          //aktueller Schritt im Ablauf
   uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
   uint8_t	 bits;
@@ -160,6 +161,30 @@ public:
   {
     setvalues.period_set_point = period;
     update();
+  }
+
+  //******************************************************
+  float get_temperature()
+  {
+    return status.temperature;
+  }
+  float get_temperature_set_point()
+  {
+    return status.temperature_set_point;
+  }
+  bool get_heater_state()
+  {
+    return bool(status.bits & 0x01);
+  }
+
+  uint8_t get_aktive_step()
+  {
+    return status.aktive_step;
+  }
+
+  uint16_t get_remaining_step_time()
+  {
+    return status.remaining_step_time;
   }
 
 private:

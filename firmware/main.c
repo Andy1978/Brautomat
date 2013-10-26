@@ -77,6 +77,7 @@
 struct s_status
 {
   float temperature;            //Isttemperatur von DS18B20[°C]
+  float temperature_set_point;  //Solltemperatur [°C]
   uint8_t aktive_step;          //aktueller Schritt im Ablauf
   uint16_t remaining_step_time; //verbleibende Zeit im aktuellen Schritt [s]
   uint8_t  bits;
@@ -221,12 +222,21 @@ ISR(TIMER0_COMP_vect) //1kHz
   }
 
   //Heizungsregelung
+  //Quelle des Sollwerts?
+  if(setvalues.bits & _BV(2)) //aus dem Temperaturprofile
+  {
+
+  }
+  else //von temperature_set_point
+  {
+    status.temperature_set_point = setvalues.temperature_set_point;
+  }
 
   if(setvalues.bits & _BV(0))  //Temperaturregelung aktiv?
   {
-    if(status.temperature >= setvalues.temperature_set_point)
+    if(status.temperature >= status.temperature_set_point)
      status.bits &= 0xFE;
-    else if(status.temperature < (setvalues.temperature_set_point-HYSTERTESE))
+    else if(status.temperature < (status.temperature_set_point-HYSTERTESE))
      status.bits |= 1;
   }
   else  //Hand
@@ -237,6 +247,7 @@ ISR(TIMER0_COMP_vect) //1kHz
      status.bits &= 0xFE;
   }
 
+  //Heizung ein/ausschalten anhand von status
   if(status.bits & _BV(0))
     PORTB |= _BV(PB3);
   else
