@@ -48,10 +48,14 @@
   S99.5°C  I77.3°C
   RH....
 
-  Buchstaben in der unteren Zeile sind die Bits in s_status.enable
-  Bit 0, R: Temperaturregelung aktiv
-  Bit 1, H: Heizung eingeschaltet
-  noch weiter definieren: Steuerung usw.
+  Buchstaben links in der unteren Zeile zeigen:
+  Zeichen
+  1: A = Temperaturegelung aktiv
+     M = Heizung im manuellen(Hand-) Betrieb
+  2: H = Heizung an
+    ' '= Heizung aus
+  3: S = Temperatursollwerte aus Schrittkette
+    ' '=
 
 **************************************************/
 
@@ -85,15 +89,15 @@ struct s_status
 struct s_setvalues
 {
   float temperature_set_point;  //Solltemperatur [°C]
-  uint8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
+  int8_t amplitude_set_point;  //Amplitude Rührwerk -127..126
   uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
   float step_temp[MAX_STEPS];   //Temperatur in der Schrittkette [°C]
   float dT_dt[MAX_STEPS];       //Temperaturanstieg [°C/min]
   uint16_t step_time[MAX_STEPS]; //Dauer Schritt [s]
   uint8_t	 bits;
-  //Bit 0 A: Temperaturregelung aktiv (Handbetrieb wenn nicht)
-  //Bit 1 M: Heizung aktiv im Handbetrieb
-  //Bit 2 S: Temperatursollwerte aus Schrittkette
+  //Bit 0: Temperaturregelung aktiv (Handbetrieb wenn nicht)
+  //Bit 1: Heizung aktiv im Handbetrieb
+  //Bit 2: Temperatursollwerte aus Schrittkette
   //Bit 3: Schritt weiter (Flanke)
   //Bit 4: Schritt zurück (Flanke)
 };
@@ -102,6 +106,8 @@ struct s_setvalues
 //#define UART_BAUD_RATE 115200
 #define OW_ONE_BUS
 
+#define HYSTERTESE 1.0
+
 volatile struct s_status status;
 volatile struct s_setvalues setvalues;
 volatile uint8_t do_ds18b20_meas;
@@ -109,6 +115,8 @@ volatile uint8_t do_update_lcd;
 
 uint8_t uart_error;
 uint8_t gSensorID[OW_ROMCODE_SIZE]={ 0x5A, 0xF2, 0xBD, 0x04};
+
+int8_t sin_list[]={0,24,48,70,89,105,117,124,127,124,117,105,89,70,48,24,0,-24,-48,-70,-89,-105,-117,-124,-127,-124,-117,-105,-89,-70,-48,-24};
 
 
 //  Integer (Basis 10) rechtsbündig auf LCD ausgeben.
@@ -139,7 +147,7 @@ void update_lcd(void)
 
   //Solltemperatur
   lcd_gotoxy(0,0);
-  _delay_ms(2);   //sonst zickt gotoxy rum, TODO: nachprüfen, ggf. Zeit verkleinern
+  _delay_ms(1);   //sonst zickt gotoxy rum, TODO: nachprüfen, ggf. Zeit verkleinern
   lcd_puts_P("S");
   dtostrf(setvalues.temperature_set_point,4,1,buf);
   lcd_puts(buf);
@@ -155,10 +163,10 @@ void update_lcd(void)
   lcd_putc('C');
 
   //Status
-  lcd_putc((setvalues.bits & _BV(0))? 'A':' ');
-  lcd_putc((setvalues.bits & _BV(1))? 'M':' ');
-  lcd_putc((setvalues.bits & _BV(2))? 'S':' ');
+  lcd_putc((setvalues.bits & _BV(0))? 'A':'M');
   lcd_putc((status.bits & _BV(0))? 'H':' ');
+  lcd_putc((setvalues.bits & _BV(2))? 'S':' ');
+  lcd_putc(' ');
 
   //aktiver Schritt
   lcd_puts_P(" S:");
@@ -182,29 +190,64 @@ void update_lcd(void)
 ISR(TIMER0_COMP_vect) //1kHz
 {
   static int16_t cnt=0;
-  if (cnt++ == 1000)
+  //static uint8_t ruehr_cnt=0;
+  static uint8_t sin_index=0;
+  if (cnt++ == 500)
   {
     do_ds18b20_meas=1;
     cnt = 0;
-  }else if(cnt==500)
+  }
+  else if(cnt==250)
+  {
     do_update_lcd=1;
-}
+  }
 
-int8_t sin_list[]={0,24,48,70,89,105,117,124,127,124,117,105,89,70,48,24,0,-24,-48,-70,-89,-105,-117,-124,-127,-124,-117,-105,-89,-70,-48,-24};
+  if(setvalues.period_set_point==0) //Handbetrieb
+  {
+    OCR1A=512-setvalues.amplitude_set_point*4;
+    OCR1B=512+setvalues.amplitude_set_point*4;
+    sin_index = 0;
+  }
+  else
+  {
+    if(cnt++ == setvalues.period_set_point)
+    {
+      cnt = 0;
+      if(++sin_index>31)
+        sin_index=0;
+      OCR1A=512-sin_list[sin_index];
+      OCR1B=512+sin_list[sin_index];
+    }
+  }
+
+  //Heizungsregelung
+
+  if(setvalues.bits & _BV(0))  //Temperaturregelung aktiv?
+  {
+    if(status.temperature >= setvalues.temperature_set_point)
+     status.bits &= 0xFE;
+    else if(status.temperature < (setvalues.temperature_set_point-HYSTERTESE))
+     status.bits |= 1;
+  }
+  else  //Hand
+  {
+    if(setvalues.bits & _BV(1))
+     status.bits |= 1;
+    else
+     status.bits &= 0xFE;
+  }
+
+  if(status.bits & _BV(0))
+    PORTB |= _BV(PB3);
+  else
+    PORTB &= ~(_BV(PB3));
+}
 
 ISR(ADC_vect) //ca. 125kHz
 {
   int16_t temp=ADC-512;
-  OCR1A=512-temp;
-  OCR1B=512+temp;
-  //OCR1A=1023;
-  //OCR1B=0;
-
-  //kurzer Heizungsrelais Test
-  if(ADC>500)
-    PORTB |= _BV(PB3);
-  else
-    PORTB &= ~(_BV(PB3));
+  //~ OCR1A=512-temp;
+  //~ OCR1B=512+temp;
 
 }
 

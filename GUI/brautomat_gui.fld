@@ -14,60 +14,39 @@ decl {cBrautomat *myBrautomat = NULL;} {private local
 Function {close_cb(Fl_Widget*, void*)} {open return_type void
 } {
   code {delete myBrautomat;
-exit(0);} {selected
-  }
+exit(0);} {}
 } 
 
 Function {} {open
 } {
   Fl_Window mainwin {
-    label {Brauautomat GUI v0.0.2} open
-    xywh {179 53 600 800} type Double hide resizable size_range {600 800 1000 1000}
+    label {Brauautomat GUI v0.0.2} open selected
+    xywh {1319 53 600 800} type Double resizable size_range {600 800 1000 1000} visible
   } {
-    Fl_Button {} {
-      label Upload
-      xywh {480 475 85 25}
-    }
     Fl_Group {} {
       label {Rührwerk} open
-      xywh {10 180 385 175} box GTK_UP_BOX align 5
+      xywh {10 180 385 115} box GTK_UP_BOX align 5
     } {
       Fl_Light_Button {} {
         label Hand
-        xywh {25 195 100 30}
+        callback {myBrautomat->set_period_set_point(0);}
+        xywh {25 205 70 30} type Radio value 1
       }
       Fl_Light_Button {} {
-        label {Auto Sinus}
-        xywh {25 295 100 30}
+        label Sinus
+        callback {myBrautomat->set_period_set_point(sl_periodendauer->value());}
+        xywh {25 245 70 30} type Radio
       }
       Fl_Value_Slider sl_amplitude {
         label Amplitude
-        xywh {155 250 225 25} type {Horz Knob} align 5 step 0.1 value 0.5
-      }
-      Fl_Button {} {
-        label Ein
-        xywh {155 195 40 30}
-      }
-      Fl_Button {} {
-        label Aus
-        xywh {200 195 40 30}
+        callback {myBrautomat->set_amplitude_set_point(sl_amplitude->value());}
+        xywh {120 210 260 25} type {Horz Knob} align 5 minimum -126 maximum 126 step 1
       }
       Fl_Value_Slider sl_periodendauer {
         label Periodendauer
-        xywh {155 295 225 25} type {Horz Knob} align 5 minimum 1 maximum 5 step 0.2 value 2
+        callback {myBrautomat->set_period_set_point(sl_periodendauer->value());}
+        xywh {120 255 260 20} type {Horz Knob} align 5 minimum 1 maximum 5 step 0.2 value 2
       }
-      Fl_Check_Button {} {
-        label {Sollwerte aus Schrittkette}
-        xywh {155 321 230 29} down_box DOWN_BOX
-      }
-      Fl_Light_Button {} {
-        label {Auto const.}
-        xywh {25 245 100 30}
-      }
-    }
-    Fl_Button {} {
-      label Download
-      xywh {480 535 85 25}
     }
     Fl_Group {} {
       label {Heizung Sollwerte und Steuerung} open
@@ -75,27 +54,33 @@ Function {} {open
     } {
       Fl_Light_Button {} {
         label Hand
-        xywh {20 40 65 30} type Radio
+        callback {myBrautomat->set_temperature_mode(0);}
+        xywh {20 40 65 30} type Radio value 1
       }
       Fl_Light_Button {} {
         label Auto
+        callback {myBrautomat->set_temperature_mode(1);}
         xywh {20 90 65 30} type Radio
       }
       Fl_Button {} {
         label Ein
-        xywh {155 40 40 30}
+        callback {myBrautomat->set_heater(1);}
+        xywh {124 35 40 30}
       }
       Fl_Button {} {
         label Aus
-        xywh {200 40 40 30}
+        callback {myBrautomat->set_heater(0);}
+        xywh {169 35 40 30}
       }
       Fl_Value_Slider sl_temperatur {
         label Solltemperatur
-        xywh {155 95 225 25} type {Horz Knob} align 5 maximum 100 step 0.5 value 20
+        callback {myBrautomat->set_temperature(sl_temperatur->value());}
+        xywh {125 90 259 25} type {Horz Knob} align 5 minimum 15 maximum 99.5 step 0.5 value 20
       }
-      Fl_Check_Button {} {
-        label {Sollwert aus Schrittkette}
-        xywh {155 126 230 24} down_box DOWN_BOX
+      Fl_Check_Button cb_temp_from_profile {
+        label {Sollwert aus Temperaturprofil}
+        callback {myBrautomat->set_temperatur_from_profile(cb_temp_from_profile->value());}
+        xywh {120 121 230 24} down_box DOWN_BOX
       }
     }
     Fl_Group {} {
@@ -116,29 +101,37 @@ Function {} {open
       }
     }
     Fl_Group {} {
-      label Schritte open
-      xywh {10 390 445 280} box GTK_UP_BOX align 5
+      label Temperaturprofil open
+      xywh {10 320 580 280} box GTK_UP_BOX align 5
     } {
       Fl_Table temp_profile {
         label Schrittparameter open
-        xywh {30 495 405 155} align 5
+        xywh {30 425 405 155} align 5
         class Spreadsheet
       } {}
       Fl_Value_Output {} {
         label {aktiver Schritt }
-        xywh {255 410 50 25}
+        xywh {255 340 50 25}
       }
       Fl_Value_Output {} {
         label {verbleibende Zeit im Schritt [s] }
-        xywh {255 440 50 25}
+        xywh {255 370 50 25}
       }
       Fl_Button {} {
         label {Schritt vor}
-        xywh {320 410 115 30}
+        xywh {320 340 115 30}
       }
       Fl_Button {} {
         label {Schritt zurück}
-        xywh {320 440 115 30}
+        xywh {320 370 115 30}
+      }
+      Fl_Button {} {
+        label Upload
+        xywh {475 460 85 25}
+      }
+      Fl_Button {} {
+        label Download
+        xywh {475 515 85 25}
       }
     }
   }

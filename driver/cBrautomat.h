@@ -65,7 +65,7 @@ typedef short int16_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
 
-#define DEBUG 1
+#define DEBUG 0
 #define MAX_STEPS 10
 
 struct s_status
@@ -82,7 +82,7 @@ struct s_status
 struct s_setvalues
 {
   float temperature_set_point;  //Solltemperatur [°C]
-  uint8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
+  int8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
   uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
   float step_temp[MAX_STEPS];   //Temperatur in der Schrittkette [°C]
   float dT_dt[MAX_STEPS];       //Temperaturanstieg [°C/min]
@@ -101,6 +101,71 @@ public:
   cBrautomat(const char* device);
   ~cBrautomat();
 
+  void print_setvalues();
+  void print_status();
+  void update();
+
+  int load_cfg(const char* filename);
+  int save_cfg(const char* filename);
+
+  int set_temp_profile(int step, int step_time, float dT_dt, float step_temp);
+  int set_temperature(float temp)
+  {
+    if(temp>99.9)
+    {
+      cerr << "Sorry, das ist kein Dampfdrucktopf..." << endl;
+      return -1;
+    }
+    setvalues.temperature_set_point = temp;
+    update();
+    return 0;
+  }
+
+  void set_temperature_mode(bool automatic)
+  {
+    set_setvalues_bit(0, automatic);
+    update();
+  }
+
+  void set_heater(bool state)
+  {
+    set_setvalues_bit(1, state);
+    update();
+  }
+
+  void set_temperatur_from_profile(bool state)
+  {
+    set_setvalues_bit(2, state);
+    update();
+  }
+
+  void next_step(bool state)
+  {
+    set_setvalues_bit(3, state);
+    update();
+  }
+
+  void previous_step(bool state)
+  {
+    set_setvalues_bit(4, state);
+    update();
+  }
+
+  void set_amplitude_set_point(uint8_t amp)
+  {
+    setvalues.amplitude_set_point = amp;
+    update();
+  }
+  void set_period_set_point(uint8_t period)
+  {
+    setvalues.period_set_point = period;
+    update();
+  }
+
+private:
+  CSerial serial;
+  char buffer[4096];
+
   //AVR relevant
   s_status status;
   s_setvalues setvalues;
@@ -108,17 +173,11 @@ public:
   //Allgemein
   string profile_name;
 
-  void print_setvalues();
-  void print_status();
+  int check_temp_profile();
+  int last_temp_profile_step;
+
   void print_steps();
-  void update();
-
-  int load_cfg(const char* filename);
-  int save_cfg(const char* filename);
-
-private:
-  CSerial serial;
-  char buffer[4096];
+  void set_setvalues_bit(uint8_t nr, bool state);
 };
 
 #endif

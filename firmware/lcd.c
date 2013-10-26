@@ -42,7 +42,7 @@
 
 
 #if LCD_IO_MODE
-#define lcd_e_delay()   __asm__ __volatile__( "rjmp 1f\n 1:" );
+#define lcd_e_delay()   __asm__ __volatile__( "rjmp 1f\n 1: rjmp 2f\n 2:");
 #define lcd_e_high()    LCD_E_PORT  |=  _BV(LCD_E_PIN);
 #define lcd_e_low()     LCD_E_PORT  &= ~_BV(LCD_E_PIN);
 #define lcd_e_toggle()  toggle_e()

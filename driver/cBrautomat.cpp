@@ -18,13 +18,16 @@
 #include "cBrautomat.h"
 
 cBrautomat::cBrautomat(const char* device)
-  :serial()
+  :serial(),
+  last_temp_profile_step(0)
 {
   //serial.open(device,B57600);
   //serial.open(device,B115200);
   std::cout << "opening serial port " << device << endl;
   serial.open(device,B38400);
   memset(&setvalues,0,sizeof(setvalues));
+
+  update();
 }
 
 cBrautomat::~cBrautomat()
@@ -36,31 +39,36 @@ cBrautomat::~cBrautomat()
 
 void cBrautomat::update()
 {
-  unsigned int ret=serial.sendData((char*)&setvalues, sizeof(s_setvalues));
-  if(DEBUG)
-    std::cout << "send "<< ret << " bytes..." << std::endl;
-  memset(&status,0,sizeof(s_status));
+  last_temp_profile_step = check_temp_profile();
+  if(last_temp_profile_step>-1)
+  {
+    unsigned int ret=serial.sendData((char*)&setvalues, sizeof(s_setvalues));
+    if(DEBUG)
+      std::cout << "send "<< ret << " bytes..." << std::endl;
+    memset(&status,0,sizeof(s_status));
 
-  //jetzt mindestens (37+10)/(115200/8) warten (37bytes zum AVR senden, 10Bytes Antwort)
-  unsigned int retry_cnt=0;
-  const unsigned int max_retry=5;
-  unsigned int received_bytes = 0;
-  do
-    {
-      usleep(30000);
-      int request_size = sizeof(s_status)-int(received_bytes);
-      ret = serial.readData((char*)&status+received_bytes, request_size);
-      received_bytes += ret;
-      if(DEBUG)
-        std::cout << "got "<< ret << " bytes out of requested " << request_size << "..." << std::endl;
-    }
-  while (received_bytes<sizeof(s_status) && ++retry_cnt<max_retry);
-  if(retry_cnt==max_retry)
-    {
-      std::cerr << "cBrautomat::update(), max retry count überschritten, keine Antwort" << endl;
-      exit(-1);
-    }
-
+    //jetzt mindestens (37+10)/(115200/8) warten (37bytes zum AVR senden, 10Bytes Antwort)
+    unsigned int retry_cnt=0;
+    const unsigned int max_retry=5;
+    unsigned int received_bytes = 0;
+    do
+      {
+        usleep(30000);
+        int request_size = sizeof(s_status)-int(received_bytes);
+        ret = serial.readData((char*)&status+received_bytes, request_size);
+        received_bytes += ret;
+        if(DEBUG)
+          std::cout << "got "<< ret << " bytes out of requested " << request_size << "..." << std::endl;
+      }
+    while (received_bytes<sizeof(s_status) && ++retry_cnt<max_retry);
+    if(retry_cnt==max_retry)
+      {
+        std::cerr << "cBrautomat::update(), max retry count überschritten, keine Antwort" << endl;
+        exit(-1);
+      }
+  }
+  else
+    std::cerr << "cBrautomat::update(), Temperaturprofil nicht konsistent" << endl;
 }
 
 void cBrautomat::print_setvalues()
@@ -72,6 +80,7 @@ void cBrautomat::print_setvalues()
   std::cout << "Heizung aktiv im Handbetrieb         = " << bool(setvalues.bits & 0x02) << std::endl;
   std::cout << "Temperatursollwerte aus Schrittkette = " << bool(setvalues.bits & 0x04) << std::endl;
   print_steps();
+  std::cout << "Letzter Schritt im Temperaturprofil = " << last_temp_profile_step+1 << std::endl;
 }
 
 void cBrautomat::print_status()
@@ -84,72 +93,15 @@ void cBrautomat::print_status()
 
 void cBrautomat::print_steps()
 {
-  std::cout << "Schritt:\t" << "dT/dt:\t" << "Schrittdauer:\t"<< " Solltemperatur:\t" << std::endl;
+  std::cout << "Schritt:" << "  Schrittdauer:\t" << "dT/dt:\t" <<" Solltemperatur:\t" << std::endl;
   for(int i=0; i<MAX_STEPS; i++)
     {
-      std::cout << i << "\t\t"
-        << setvalues.step_time[i] << " s\t"
-        << setvalues.dT_dt[i] << " °C/min\t\t"
+      std::cout << i+1 << "\t  "
+        << setvalues.step_time[i] << " s\t\t"
+        << setvalues.dT_dt[i] << " °C/min\t"
         << setvalues.step_temp[i] << " °C" << std::endl;
     }
 }
-
-/*
-void cBrautomat::_set_servos(float pos1, float pos2)
-{
-    pos1=clamp_abs(-pos1,95)/90;
-    pos2=clamp_abs(-pos2,95)/90;
-
-    setvalues.servo2_pos_soll=(pos2>=0)? pos2*(990-570)+570 : pos2*(570-130)+570;
-    setvalues.servo1_pos_soll=(pos1>=0)? pos1*(75-538)+538 : pos1*(538-955)+538;
-
-    setvalues.enable |= 0x03;		//PWM Freigabe für beide Servos
-    update();
-    setvalues.enable &= 0xFC;
-	update();
-}
-
-void cBrautomat::_set_servos_wait(float pos1, float pos2)
-{
-    _set_servos(pos1,pos2);
-
-	//Status flag pollen. AVR setzt diese zurück sobald Position erreicht
-	while(status.enable & 3)
-	{
-	 update();
-	 usleep(10000);
-     //cout << "waiting--" << hex << uint16_t(status.enable) <<  endl;
-	}
-}
-
-void cBrautomat::set_servos(float pos1, float pos2)
-{
-    _set_servos_wait(pos1+1.8,pos2+1.8);
-    usleep(300000);
-    _set_servos_wait(pos1,pos2);
-    update();
-}
-
-void cBrautomat::set_QWP_rotation(double rot)
-{
-	update();
-	double diff=rot-get_QWP_rotation();
-	if(diff<0)
-	{
-		if(DEBUG)
-			cout << "diff < 0, diff=" << diff << endl;
-		rot+=(-trunc(diff/360)+1)*360;
-		if(DEBUG)
-			cout << "using " << rot << " as new value" << endl;
-	}
-
-	setvalues.qwp_pos=_qwp_deg_to_cnt(rot);
-	setvalues.enable |= 1<<2;
-	update();
-	setvalues.enable &= ~(1<<2);
-}
-
-*/
 
 int cBrautomat::load_cfg(const char* filename)
 {
@@ -229,4 +181,49 @@ int cBrautomat::save_cfg(const char* filename)
       return(EXIT_FAILURE);
     }
   return(EXIT_SUCCESS);
+}
+
+int cBrautomat::check_temp_profile()
+{
+  //Plausibilitätsprüfung
+  //Wenn dT/dt=0, muss step_time des vorherigen Schritts gleich der des aktuellen Schrittes sein
+  //ist step_time=0 und dT/dt=0 ist dies der letzte Schritt der für immer läuft
+  for(int n=0; n<MAX_STEPS; ++n)
+  {
+    if(setvalues.dT_dt[n]==0.0)
+    {
+      if(n>0 && (setvalues.step_temp[n] != setvalues.step_temp[n-1]))
+        return -1;
+      if (setvalues.step_time[n]==0.0)
+        return n;
+    }
+  }
+  return MAX_STEPS-1;
+}
+
+int cBrautomat::set_temp_profile(int step, int step_time, float dT_dt, float step_temp)
+{
+  if(step>MAX_STEPS)
+  {
+    cerr << "Schritt " << step << " ueberschreitet die maximale Anzahl von Schritten" << endl;
+    return -1;
+  }
+  if(step<1)
+  {
+    cerr << "Schritt muss >0 sein" << endl;
+    return -1;
+  }
+
+  setvalues.step_time[step-1] = step_time;
+  setvalues.dT_dt[step-1]     = dT_dt;
+  setvalues.step_temp[step-1] = step_temp;
+  return 0;
+}
+
+void cBrautomat::set_setvalues_bit(uint8_t nr, bool state)
+{
+  if(state)
+    setvalues.bits |= 1<<nr;
+  else
+    setvalues.bits &= (uint8_t)~(1<<nr);
 }
