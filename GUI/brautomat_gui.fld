@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0302 
+version 1.0300 
 header_name {.h} 
 code_name {.cxx}
 decl {\#include "../driver/cBrautomat.h"} {public global
@@ -20,8 +20,8 @@ exit(0);} {}
 Function {} {open
 } {
   Fl_Window mainwin {
-    label {Brauautomat GUI v0.0.2} open selected
-    xywh {1319 53 600 800} type Double resizable size_range {600 800 1000 1000} visible
+    label {Brauautomat GUI v0.0.2} open
+    xywh {679 53 600 800} type Double resizable size_range {600 800 1000 1000} visible
   } {
     Fl_Group {} {
       label {Rührwerk} open
@@ -54,7 +54,7 @@ Function {} {open
     } {
       Fl_Light_Button {} {
         label Hand
-        callback {myBrautomat->set_temperature_mode(0);}
+        callback {myBrautomat->set_temperature_mode(0);} selected
         xywh {20 40 65 30} type Radio value 1
       }
       Fl_Light_Button {} {
@@ -102,11 +102,11 @@ Function {} {open
     }
     Fl_Group {} {
       label Temperaturprofil open
-      xywh {10 320 580 280} box GTK_UP_BOX align 5
+      xywh {10 320 580 465} box GTK_UP_BOX align 5
     } {
       Fl_Table temp_profile {
         label Schrittparameter open
-        xywh {30 425 405 155} align 5
+        xywh {30 425 405 345} align 5
         class Spreadsheet
       } {}
       Fl_Value_Output {} {
@@ -142,7 +142,7 @@ myBrautomat = new cBrautomat("/dev/ttyUSB0");
   temp_profile->row_header(1);
   temp_profile->row_header_width(70);
   temp_profile->row_resize(1);
-  temp_profile->rows(5);
+  temp_profile->rows(10);
   temp_profile->row_height_all(25);
   // Table cols
   temp_profile->col_header(1);
