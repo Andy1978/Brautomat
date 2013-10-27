@@ -13,4 +13,4 @@ brautomat_driver_test: brautomat_driver_test.cpp cBrautomat.o serial.o
 
 
 clean:
-	rm -f *.o brautomat_driver_test
+	rm -f *.o brautomat_driver_test *.log

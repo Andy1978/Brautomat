@@ -13,5 +13,5 @@ brautomat_gui.cxx brautomat_gui.h: brautomat_gui.fld
 	fluid -c $<
 
 clean:
-	rm -f brautomat_gui brautomat_gui.cxx brautomat_gui.h
+	rm -f brautomat_gui brautomat_gui.cxx brautomat_gui.h *.log
 
