@@ -64,15 +64,11 @@ Function {} {open
         callback {double start = sl_amplitude->value();
 double step = (start>0)? -3: 3;
 
-for (double k = start; k!=0; k+=step)
+for (double k = start; fabs(k)>=fabs(step); k+=step)
 {
   sl_amplitude->value(k);
   myBrautomat->set_amplitude_set_point(k);
   Fl::wait(1e-6);
-  //cout << k << " " << step << " ";
-  if(fabs(k)<fabs(step))
-    step=-fabs(k);
-  //cout << step << endl;
 }
 
 sl_amplitude->value(0);
