@@ -84,9 +84,6 @@ void cBrautomat::update()
         ofs.close();
       }
   }
-  else
-    std::cerr << "cBrautomat::update(), Temperaturprofil nicht konsistent" << endl;
-
 }
 
 void cBrautomat::print_setvalues()
@@ -150,7 +147,7 @@ int cBrautomat::load_cfg(const char* filename)
         {
           setvalues.step_temp[i] = float(step_temp[i]);
           setvalues.dT_dt[i]     = float(dT_dt[i]);
-          setvalues.step_time[i] = float(step_time[i]);
+          setvalues.step_time[i] = int(step_time[i]);
         }
     }
   catch (FileIOException &fioex) //file does not exist or parse error
@@ -190,7 +187,7 @@ int cBrautomat::save_cfg(const char* filename)
         {
           step_temp.add(Setting::TypeFloat) = setvalues.step_temp[i];
           dT_dt.add(Setting::TypeFloat)     = setvalues.dT_dt[i];
-          step_time.add(Setting::TypeFloat) = setvalues.step_time[i];
+          step_time.add(Setting::TypeInt) = setvalues.step_time[i];
         }
       cfg.writeFile(filename);
     }
@@ -212,7 +209,10 @@ int cBrautomat::check_temp_profile()
     if(setvalues.dT_dt[n]==0.0)
     {
       if(n>0 && (setvalues.step_temp[n] != setvalues.step_temp[n-1]))
+      {
+        std::cerr << "cBrautomat::check_temp_profile(), Temperaturprofil nicht konsistent in Schritt " << n+1 << endl;
         return -1;
+      }
       if (setvalues.step_time[n]==0.0)
         return n;
     }
@@ -236,6 +236,24 @@ int cBrautomat::set_temp_profile(int step, int step_time, float dT_dt, float ste
   setvalues.step_time[step-1] = step_time;
   setvalues.dT_dt[step-1]     = dT_dt;
   setvalues.step_temp[step-1] = step_temp;
+  return 0;
+}
+
+int cBrautomat::get_temp_profile(int step, int &step_time, float &dT_dt, float &step_temp)
+{
+  if(step>MAX_STEPS)
+  {
+    cerr << "Schritt " << step << " ueberschreitet die maximale Anzahl von Schritten" << endl;
+    return -1;
+  }
+  if(step<1)
+  {
+    cerr << "Schritt muss >0 sein" << endl;
+    return -1;
+  }
+  step_time = setvalues.step_time[step-1];
+  dT_dt = setvalues.dT_dt[step-1];
+  step_temp = setvalues.step_temp[step-1];
   return 0;
 }
 

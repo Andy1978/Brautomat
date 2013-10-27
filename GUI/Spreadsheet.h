@@ -86,6 +86,12 @@ public:
       values[R][C] = value;
     redraw();
   }
+  double get_value(int R, int C)
+  {
+    if(R>=0 && R<MAX_ROWS && C>=0 && C<MAX_COLS)
+      return values[R][C];
+    return -1;
+  }
 
 };
 

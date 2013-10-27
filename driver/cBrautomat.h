@@ -112,6 +112,8 @@ public:
   int save_cfg(const char* filename);
 
   int set_temp_profile(int step, int step_time, float dT_dt, float step_temp);
+  int get_temp_profile(int step, int &step_time, float &dT_dt, float &step_temp);
+
   int set_temperature(float temp)
   {
     if(temp>99.9)

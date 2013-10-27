@@ -3,7 +3,8 @@
 ## second, usec since epoch, Isttemperatur, Solltemperatur, aktiver Schritt,
 ## Zeit verbleibend, Status Heizung
 
-d = load("cBrautomat_status.log");
+#d = load("cBrautomat_status.log");
+d = load("efbe_schott_wasserkocher.log");
 
 t = d(:,1)+d(:,2)/1e6;
 t -= t(1);

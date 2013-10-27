@@ -107,7 +107,7 @@ struct s_setvalues
 //#define UART_BAUD_RATE 115200
 #define OW_ONE_BUS
 
-#define HYSTERTESE 1.0
+#define HYSTERTESE 0.2
 
 volatile struct s_status status;
 volatile struct s_setvalues setvalues;
@@ -156,7 +156,7 @@ void update_lcd(void)
   lcd_gotoxy(0,0);
   _delay_ms(1);   //sonst zickt gotoxy rum, TODO: nachprüfen, ggf. Zeit verkleinern
   lcd_puts_P("S");
-  dtostrf(setvalues.temperature_set_point,4,1,buf);
+  dtostrf(status.temperature_set_point,4,1,buf);
   lcd_puts(buf);
   lcd_putc(0xDF);
   lcd_putc('C');
@@ -199,6 +199,7 @@ ISR(TIMER0_COMP_vect) //1kHz
   static int16_t cnt=0;
   static uint16_t ruehr_cnt=0;
   static uint8_t sin_index=0;
+  static uint16_t temp_cnt=0;
   if (cnt++ == 500)
   {
     do_ds18b20_meas=1;
@@ -230,9 +231,82 @@ ISR(TIMER0_COMP_vect) //1kHz
 
   //Heizungsregelung
   //Quelle des Sollwerts?
+  //Schrittzähler
+  static uint8_t last_next_step = 0;
+  static uint8_t last_previous_step = 0;
+  static uint8_t last_temp_from_profile = 0;
+
+  //positive Flanke Temperatur aus Temperaturprofile setzt Schrittzähler zurück
+  if(setvalues.bits & _BV(2) && !last_temp_from_profile)
+  {
+    status.aktive_step = 0;
+    status.temperature_set_point = status.temperature;
+    status.remaining_step_time = setvalues.step_time[status.aktive_step];
+  }
+  last_temp_from_profile = setvalues.bits & _BV(2);
+
   if(setvalues.bits & _BV(2)) //aus dem Temperaturprofile
   {
+    //auf Sekunden runter teilen
+    if(temp_cnt++ > 1000)
+    {
+      temp_cnt=0;
+      float tmp_dT_dt = setvalues.dT_dt[status.aktive_step]/60.0;
+      float delta_T = setvalues.step_temp[status.aktive_step]-status.temperature_set_point ;
+      if(tmp_dT_dt == 0.0)
+        status.temperature_set_point = setvalues.step_temp[status.aktive_step];
+      else if(tmp_dT_dt>0)
+      {
+        if(tmp_dT_dt>delta_T)
+          tmp_dT_dt = delta_T;
 
+        if(status.temperature_set_point < setvalues.step_temp[status.aktive_step])
+          status.temperature_set_point += tmp_dT_dt;
+
+        if(status.temperature >= setvalues.step_temp[status.aktive_step])
+        {
+          status.aktive_step++;
+          status.remaining_step_time = setvalues.step_time[status.aktive_step];
+        }
+      }
+      else
+      {
+        if(tmp_dT_dt<delta_T)
+          tmp_dT_dt = delta_T;
+
+        if(status.temperature_set_point > setvalues.step_temp[status.aktive_step])
+          status.temperature_set_point += tmp_dT_dt;
+
+        if(status.temperature < setvalues.step_temp[status.aktive_step])
+        {
+          status.aktive_step++;
+          status.remaining_step_time = setvalues.step_time[status.aktive_step];
+        }
+      }
+
+      if((setvalues.bits & _BV(3)) && !last_next_step)  //Schritt vor
+      {
+        status.aktive_step++;
+        status.remaining_step_time = setvalues.step_time[status.aktive_step];
+      }
+      last_next_step = setvalues.bits & _BV(3);
+
+      if((setvalues.bits & _BV(4)) && !last_previous_step)  //Schritt zurück
+      {
+        status.aktive_step--;
+        status.remaining_step_time = setvalues.step_time[status.aktive_step];
+      }
+      last_previous_step = setvalues.bits & _BV(4);
+
+      //über Zeit zum nächsten Schritt schalten?
+      if(status.remaining_step_time>0)
+        status.remaining_step_time--;
+      else if(setvalues.step_time[status.aktive_step]>0)
+      {
+        status.aktive_step++;
+        status.remaining_step_time = setvalues.step_time[status.aktive_step];
+      }
+    }
   }
   else //von temperature_set_point
   {
@@ -259,21 +333,6 @@ ISR(TIMER0_COMP_vect) //1kHz
     PORTB |= _BV(PB3);
   else
     PORTB &= ~(_BV(PB3));
-
-  //Schrittzähler
-  static uint_last_next_step = 0;
-  if((setvalues.bits & _BV(3)) && !uint_last_next_step)  //Schritt vor
-  {
-    status.aktive_step++;
-  }
-  uint_last_next_step = setvalues.bits & _BV(3);
-
-  static uint_last_previous_step = 0;
-  if((setvalues.bits & _BV(4)) && !uint_last_previous_step)  //Schritt zurück
-  {
-    status.aktive_step--;
-  }
-  uint_last_previous_step = setvalues.bits & _BV(4);
 }
 
 ISR(ADC_vect) //ca. 125kHz

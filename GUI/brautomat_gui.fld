@@ -13,7 +13,11 @@ decl {cBrautomat *myBrautomat = NULL;} {private local
 
 Function {close_cb(Fl_Widget*, void*)} {open return_type void
 } {
-  code {delete myBrautomat;
+  code {myBrautomat->set_temperatur_from_profile(0);
+myBrautomat->set_temperature_mode(0);
+  
+myBrautomat->save_cfg("temp_profile.cfg");
+delete myBrautomat;
 exit(0);} {}
 } 
 
@@ -125,12 +129,12 @@ myBrautomat->set_temperature_mode(0);}
         xywh {535 70 40 30} maximum 100 step 0.1 value 20
       }
       Fl_Check_Button cb_heater {
-        label {Heizung aktiv}
+        label {Heizung aktiv} selected
         xywh {425 110 135 30} down_box DOWN_BOX deactivate
       }
     }
     Fl_Group {} {
-      label Temperaturprofil open selected
+      label Temperaturprofil open
       xywh {10 320 580 465} box GTK_UP_BOX align 5
     } {
       Fl_Table temp_profile {
@@ -157,12 +161,15 @@ myBrautomat->set_temperature_mode(0);}
         xywh {320 370 115 30} when 1
       }
       Fl_Button {} {
-        label Upload
-        xywh {475 460 85 25}
-      }
-      Fl_Button {} {
-        label Download
-        xywh {475 515 85 25}
+        label {übernehmen}
+        callback {for(int k=0;k<MAX_STEPS;++k)
+{
+  myBrautomat->set_temp_profile(k+1,
+  	temp_profile->get_value(k, 0),
+  	temp_profile->get_value(k, 1),
+  	temp_profile->get_value(k, 2));
+}}
+        xywh {460 350 105 40}
       }
     }
   }
@@ -170,20 +177,35 @@ myBrautomat->set_temperature_mode(0);}
 myBrautomat = new cBrautomat("/dev/ttyUSB0");
 
 // Table rows
-  temp_profile->row_header(1);
-  temp_profile->row_header_width(70);
-  temp_profile->row_resize(1);
-  temp_profile->rows(10);
-  temp_profile->row_height_all(25);
-  // Table cols
-  temp_profile->col_header(1);
-  temp_profile->col_header_height(25);
-  temp_profile->col_resize(1);
-  temp_profile->cols(MAX_COLS);
+temp_profile->row_header(1);
+temp_profile->row_header_width(70);
+temp_profile->row_resize(1);
+temp_profile->rows(10);
+temp_profile->row_height_all(25);
+// Table cols
+temp_profile->col_header(1);
+temp_profile->col_header_height(25);
+temp_profile->col_resize(1);
+temp_profile->cols(MAX_COLS);
   
-  temp_profile->col_width(0, 90);
-  temp_profile->col_width(1, 120);
-  temp_profile->col_width(2, 120);
+temp_profile->col_width(0, 90);
+temp_profile->col_width(1, 120);
+temp_profile->col_width(2, 120);
+
+myBrautomat->load_cfg("temp_profile.cfg");
+
+int step_time;
+float dT_dt;
+float step_temp;
+
+for(int k=0;k<MAX_STEPS;++k)
+{
+  myBrautomat->get_temp_profile(k+1, step_time, dT_dt, step_temp);
+  temp_profile->set_value(k, 0, step_time);
+  temp_profile->set_value(k, 1, dT_dt);
+  temp_profile->set_value(k, 2, step_temp);
+}
+
   
- Fl::add_timeout(0.5, update_status);} {}
+Fl::add_timeout(0.5, update_status);} {}
 } 
