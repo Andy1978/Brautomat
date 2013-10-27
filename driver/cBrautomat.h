@@ -50,12 +50,14 @@
 
 #include <libconfig.h++>
 #include <iostream>
+#include <fstream>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h> //für usleep
 #include <math.h>
 #include <cstdio>   //für remove
 #include <cerrno>   //für errno
+#include <sys/time.h>
 #include "serial.h"
 
 using namespace libconfig;

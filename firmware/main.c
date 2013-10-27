@@ -117,8 +117,14 @@ volatile uint8_t do_update_lcd;
 uint8_t uart_error;
 uint8_t gSensorID[OW_ROMCODE_SIZE]={ 0x5A, 0xF2, 0xBD, 0x04};
 
-int8_t sin_list[]={0,24,48,70,89,105,117,124,127,124,117,105,89,70,48,24,0,-24,-48,-70,-89,-105,-117,-124,-127,-124,-117,-105,-89,-70,-48,-24};
+// sin_list generated with octave:
+// p=linspace(0,2*pi,33); p(end)=[];
+// printf("%i,",fix(sin(p)*511))
+// int16_t sin_list[]={0,99,195,283,361,424,472,501,511,501,472,424,361,283,195,99,0,-99,-195,-283,-361,-424,-472,-501,-511,-501,-472,-424,-361,-283,-195,-99};
 
+// p=linspace(0,2*pi,65); p(end)=[];
+// printf("%.4f,",sin(p)*4)
+float sin_list[]={0.0000,0.3921,0.7804,1.1611,1.5307,1.8856,2.2223,2.5376,2.8284,3.0920,3.3259,3.5277,3.6955,3.8278,3.9231,3.9807,4.0000,3.9807,3.9231,3.8278,3.6955,3.5277,3.3259,3.0920,2.8284,2.5376,2.2223,1.8856,1.5307,1.1611,0.7804,0.3921,0.0000,-0.3921,-0.7804,-1.1611,-1.5307,-1.8856,-2.2223,-2.5376,-2.8284,-3.0920,-3.3259,-3.5277,-3.6955,-3.8278,-3.9231,-3.9807,-4.0000,-3.9807,-3.9231,-3.8278,-3.6955,-3.5277,-3.3259,-3.0920,-2.8284,-2.5376,-2.2223,-1.8856,-1.5307,-1.1611,-0.7804,-0.3921};
 
 //  Integer (Basis 10) rechtsbündig auf LCD ausgeben.
 void lcd_put_int(int16_t val, uint8_t len)
@@ -191,7 +197,7 @@ void update_lcd(void)
 ISR(TIMER0_COMP_vect) //1kHz
 {
   static int16_t cnt=0;
-  //static uint8_t ruehr_cnt=0;
+  static uint16_t ruehr_cnt=0;
   static uint8_t sin_index=0;
   if (cnt++ == 500)
   {
@@ -211,13 +217,14 @@ ISR(TIMER0_COMP_vect) //1kHz
   }
   else
   {
-    if(cnt++ == setvalues.period_set_point)
+    if(ruehr_cnt++ > (3*setvalues.period_set_point+setvalues.period_set_point/8)) //>3.125*period
     {
-      cnt = 0;
-      if(++sin_index>31)
+      ruehr_cnt = 0;
+      if(++sin_index>63)
         sin_index=0;
-      OCR1A=512-sin_list[sin_index];
-      OCR1B=512+sin_list[sin_index];
+      float f = sin_list[sin_index] * setvalues.amplitude_set_point;
+      OCR1A=512 - f;
+      OCR1B=512 + f;
     }
   }
 
@@ -252,14 +259,29 @@ ISR(TIMER0_COMP_vect) //1kHz
     PORTB |= _BV(PB3);
   else
     PORTB &= ~(_BV(PB3));
+
+  //Schrittzähler
+  static uint_last_next_step = 0;
+  if((setvalues.bits & _BV(3)) && !uint_last_next_step)  //Schritt vor
+  {
+    status.aktive_step++;
+  }
+  uint_last_next_step = setvalues.bits & _BV(3);
+
+  static uint_last_previous_step = 0;
+  if((setvalues.bits & _BV(4)) && !uint_last_previous_step)  //Schritt zurück
+  {
+    status.aktive_step--;
+  }
+  uint_last_previous_step = setvalues.bits & _BV(4);
 }
 
 ISR(ADC_vect) //ca. 125kHz
 {
-  int16_t temp=ADC-512;
+  //momentan keine Verwendung für den ADC
+  //int16_t temp=ADC-512;
   //~ OCR1A=512-temp;
   //~ OCR1B=512+temp;
-
 }
 
 // UART bearbeiten. Es gibt nur ein Telegramm mit allen Sollwerten
@@ -299,7 +321,7 @@ int main(void)
   uart_init(UART_BAUD_SELECT(UART_BAUD_RATE,F_CPU));
   lcd_init(LCD_DISP_ON);
   lcd_clrscr();
-  lcd_puts_P("Brautomat v0.5\n");
+  lcd_puts_P("Brautomat v0.6\n");
   lcd_gotoxy(0,1);
   lcd_puts_P(__DATE__" aw");
 

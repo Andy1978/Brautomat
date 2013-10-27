@@ -42,10 +42,12 @@ void cBrautomat::update()
   last_temp_profile_step = check_temp_profile();
   if(last_temp_profile_step>-1)
   {
+    struct timeval update_ts;
     unsigned int ret=serial.sendData((char*)&setvalues, sizeof(s_setvalues));
     if(DEBUG)
       std::cout << "send "<< ret << " bytes..." << std::endl;
     memset(&status,0,sizeof(s_status));
+    gettimeofday(&update_ts, NULL);
 
     //jetzt mindestens (37+10)/(115200/8) warten (37bytes zum AVR senden, 10Bytes Antwort)
     unsigned int retry_cnt=0;
@@ -66,9 +68,25 @@ void cBrautomat::update()
         std::cerr << "cBrautomat::update(), max retry count überschritten, keine Antwort" << endl;
         exit(-1);
       }
+    else
+      {
+        //status mit timestamp in eine Datei schreiben
+        std::ofstream ofs;
+        ofs.open ("cBrautomat_status.log", std::ofstream::out | std::ofstream::app);
+
+        ofs << update_ts.tv_sec << " " << update_ts.tv_usec << " "
+            << status.temperature
+            << " " << status.temperature_set_point
+            << " " << int(status.aktive_step)
+            << " " << int(status.remaining_step_time)
+            << " " << bool(status.bits & 0x01) << std::endl;
+
+        ofs.close();
+      }
   }
   else
     std::cerr << "cBrautomat::update(), Temperaturprofil nicht konsistent" << endl;
+
 }
 
 void cBrautomat::print_setvalues()
@@ -86,6 +104,7 @@ void cBrautomat::print_setvalues()
 void cBrautomat::print_status()
 {
   std::cout << "Isttemperatur     = " << status.temperature << std::endl;
+  std::cout << "Solltemperatur    = " << status.temperature_set_point << std::endl;
   std::cout << "aktiver Schritt   = " << int(status.aktive_step) << std::endl;
   std::cout << "verbleibende Zeit = " << int(status.remaining_step_time) << std::endl;
   std::cout << "Heizung aktiv = " << bool(status.bits & 0x01) << std::endl;
