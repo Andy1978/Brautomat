@@ -84,12 +84,13 @@ struct s_status
 
 struct s_setvalues
 {
-  float temperature_set_point;  //Solltemperatur [°C]
-  int8_t amplitude_set_point;  //Amplitude Rührwerk 0-255
-  uint8_t period_set_point;     //Periodendauer Rührwerk in 100ms (0=keine Modulation)
-  float step_temp[MAX_STEPS];   //Temperatur in der Schrittkette [°C]
-  float dT_dt[MAX_STEPS];       //Temperaturanstieg [°C/min]
+  float temperature_set_point;   //Solltemperatur [°C]
+  int8_t amplitude_set_point;    //Amplitude Rührwerk 0-255
+  uint8_t period_set_point;      //Periodendauer Rührwerk in 100ms (0=keine Modulation)
+  float step_temp[MAX_STEPS];    //Temperatur in der Schrittkette [°C]
+  float dT_dt[MAX_STEPS];        //Temperaturanstieg [°C/min]
   uint16_t step_time[MAX_STEPS]; //Dauer Schritt [s]
+  uint16_t add_to_remaining_step_time; //wird zu remaining_step_time
   uint8_t	 bits;
   //Bit 0: Temperaturregelung aktiv (Handbetrieb wenn nicht)
   //Bit 1: Heizung aktiv im Handbetrieb
@@ -165,6 +166,21 @@ public:
   {
     setvalues.period_set_point = period;
     update();
+  }
+
+  void add_to_remaining_step_time(uint16_t value)
+  {
+    //prüfen, ob dies überhaupt ein Schritt mit Weiterschaltung
+    //durch Zeit ist
+    if(setvalues.step_time[status.aktive_step]>0)
+    {
+      setvalues.add_to_remaining_step_time = value;
+      update();
+      setvalues.add_to_remaining_step_time = 0;
+      update();
+    }
+    else
+      cerr << "error add_to_remaining_step_time: Schritt hat keine Zeitschaltung" << endl;
   }
 
   //******************************************************

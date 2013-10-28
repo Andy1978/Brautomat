@@ -129,17 +129,17 @@ myBrautomat->set_temperature_mode(0);}
         xywh {535 70 40 30} maximum 100 step 0.1 value 20
       }
       Fl_Check_Button cb_heater {
-        label {Heizung aktiv} selected
+        label {Heizung aktiv}
         xywh {425 110 135 30} down_box DOWN_BOX deactivate
       }
     }
     Fl_Group {} {
-      label Temperaturprofil open
+      label Temperaturprofil open selected
       xywh {10 320 580 465} box GTK_UP_BOX align 5
     } {
       Fl_Table temp_profile {
         label Schrittparameter open
-        xywh {30 425 405 345} align 5
+        xywh {30 465 405 305} align 5
         class Spreadsheet
       } {}
       Fl_Value_Output vo_aktive_step {
@@ -169,7 +169,16 @@ myBrautomat->set_temperature_mode(0);}
   	temp_profile->get_value(k, 1),
   	temp_profile->get_value(k, 2));
 }}
-        xywh {460 350 105 40}
+        xywh {460 585 105 40}
+      }
+      Fl_Value_Input vi_time_offset {
+        label {Schritt verlängern [s]}
+        xywh {255 415 50 25} maximum 600 step 1
+      }
+      Fl_Button {} {
+        label {verlängern}
+        callback {myBrautomat->add_to_remaining_step_time(vi_time_offset->value());}
+        xywh {320 413 115 30}
       }
     }
   }

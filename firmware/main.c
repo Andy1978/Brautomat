@@ -95,6 +95,7 @@ struct s_setvalues
   float step_temp[MAX_STEPS];   //Temperatur in der Schrittkette [°C]
   float dT_dt[MAX_STEPS];       //Temperaturanstieg [°C/min]
   uint16_t step_time[MAX_STEPS]; //Dauer Schritt [s]
+  uint16_t add_to_remaining_step_time; //wird zu remaining_step_time
   uint8_t	 bits;
   //Bit 0: Temperaturregelung aktiv (Handbetrieb wenn nicht)
   //Bit 1: Heizung aktiv im Handbetrieb
@@ -235,6 +236,7 @@ ISR(TIMER0_COMP_vect) //1kHz
   static uint8_t last_next_step = 0;
   static uint8_t last_previous_step = 0;
   static uint8_t last_temp_from_profile = 0;
+  static uint16_t last_add_to_remaining_step_time = 0;
 
   //positive Flanke Temperatur aus Temperaturprofile setzt Schrittzähler zurück
   if(setvalues.bits & _BV(2) && !last_temp_from_profile)
@@ -245,8 +247,27 @@ ISR(TIMER0_COMP_vect) //1kHz
   }
   last_temp_from_profile = setvalues.bits & _BV(2);
 
+  //soll ein Wert zur remaining_step_time adiiert werden?
+  if(setvalues.add_to_remaining_step_time != last_add_to_remaining_step_time)
+    status.remaining_step_time += setvalues.add_to_remaining_step_time;
+  last_add_to_remaining_step_time = setvalues.add_to_remaining_step_time;
+
   if(setvalues.bits & _BV(2)) //aus dem Temperaturprofile
   {
+    if((setvalues.bits & _BV(3)) && !last_next_step)  //Schritt vor
+    {
+      status.aktive_step++;
+      status.remaining_step_time = setvalues.step_time[status.aktive_step];
+    }
+    last_next_step = setvalues.bits & _BV(3);
+
+    if((setvalues.bits & _BV(4)) && !last_previous_step)  //Schritt zurück
+    {
+      status.aktive_step--;
+      status.remaining_step_time = setvalues.step_time[status.aktive_step];
+    }
+    last_previous_step = setvalues.bits & _BV(4);
+
     //auf Sekunden runter teilen
     if(temp_cnt++ > 1000)
     {
@@ -283,20 +304,6 @@ ISR(TIMER0_COMP_vect) //1kHz
           status.remaining_step_time = setvalues.step_time[status.aktive_step];
         }
       }
-
-      if((setvalues.bits & _BV(3)) && !last_next_step)  //Schritt vor
-      {
-        status.aktive_step++;
-        status.remaining_step_time = setvalues.step_time[status.aktive_step];
-      }
-      last_next_step = setvalues.bits & _BV(3);
-
-      if((setvalues.bits & _BV(4)) && !last_previous_step)  //Schritt zurück
-      {
-        status.aktive_step--;
-        status.remaining_step_time = setvalues.step_time[status.aktive_step];
-      }
-      last_previous_step = setvalues.bits & _BV(4);
 
       //über Zeit zum nächsten Schritt schalten?
       if(status.remaining_step_time>0)

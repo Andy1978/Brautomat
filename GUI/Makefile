@@ -5,13 +5,18 @@ CFLAGS:= -Wall -Wextra -ggdb `fltk-config --cxxflags` `pkg-config --cflags libco
 
 all: brautomat_gui
 
-brautomat_gui: brautomat_gui.cxx Spreadsheet.h
-	$(MAKE) -C ../driver
-	g++ $(CFLAGS) -o $@ ../driver/cBrautomat.o ../driver/serial.o $< $(LIBS)
+cBrautomat.o: ../driver/cBrautomat.cpp ../driver/cBrautomat.h
+	g++ $(CFLAGS) -c $< $(LIBS)
+
+serial.o: ../driver/serial.cpp ../driver/serial.h
+	g++ $(CFLAGS) -c $< $(LIBS)
+
+brautomat_gui: brautomat_gui.cxx cBrautomat.o serial.o Spreadsheet.h ../driver/cBrautomat.h
+	g++ $(CFLAGS) -o $@ cBrautomat.o serial.o $< $(LIBS)
 
 brautomat_gui.cxx brautomat_gui.h: brautomat_gui.fld
 	fluid -c $<
 
 clean:
-	rm -f brautomat_gui brautomat_gui.cxx brautomat_gui.h *.log
+	rm -f *.o brautomat_gui brautomat_gui.cxx brautomat_gui.h
 
