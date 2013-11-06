@@ -1,0 +1,9 @@
+Brautomat - der (Bier)brau(au)tomat
+
+Funktionen:
+  * Ansteuerung des Rührwegs mit fester Drehzahl oder Sinusmodulation
+  * Temperaturregelung entlang des konfigurierbaren Profils
+  * TODO: please fill me!
+
+Schaltplände finden sich in /Dokumentation, CAD Zeichnungen kommen noch dazu.
+Bilder finden sich auf dem dazugehörigen Wiki: TODO: verlinken
