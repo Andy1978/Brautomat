@@ -1,0 +1,14 @@
+07.11.2013 Andreas Weber
+Spielerei mit octave control
+
+Links:
+http://wiki.octave.org/Control_package
+http://octave.sourceforge.net/control/index.html
+http://web.mit.edu/6.302/www/compare/report.html
+http://www.frad.t.u-tokyo.ac.jp/~miyoshi/nu2006/octave-doc-2.1.35/octave_29.html#SEC176
+
+http://www.mathworks.de/de/help/control/index.html
+
+hm, test_control zeigt 2 failed tests.. mal bugreport schreiben?
+
+L = tf(3e4 * [0.0025 0.1 1], [0.01 1.03 3.03 3.01 1]);
