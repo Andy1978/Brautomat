@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0302 
+version 1.0300 
 header_name {.h} 
 code_name {.cxx}
 decl {\#include "../driver/cBrautomat.h"} {public global
@@ -36,7 +36,7 @@ Fl::repeat_timeout(0.5, update_status);} {}
 Function {} {open
 } {
   Fl_Window mainwin {
-    label {Brauautomat GUI v0.0.2} open
+    label {Brauautomat GUI v0.2} open
     xywh {27 155 600 800} type Double resizable size_range {600 800 1000 1000} visible
   } {
     Fl_Group {} {
@@ -46,22 +46,22 @@ Function {} {open
       Fl_Light_Button {} {
         label Hand
         callback {myBrautomat->set_period_set_point(0);}
-        xywh {25 205 70 30} type Radio value 1
+        xywh {25 205 70 30} type Radio box GTK_UP_BOX down_box GTK_DOWN_BOX value 1
       }
       Fl_Light_Button {} {
         label Sinus
         callback {myBrautomat->set_period_set_point(5*sl_periodendauer->value());}
-        xywh {25 244 70 30} type Radio
+        xywh {25 244 70 30} type Radio box GTK_UP_BOX down_box GTK_DOWN_BOX
       }
       Fl_Value_Slider sl_amplitude {
         label Amplitude
         callback {myBrautomat->set_amplitude_set_point(sl_amplitude->value());}
-        xywh {120 210 330 25} type {Horz Knob} align 5 minimum -126 maximum 126 step 1
+        xywh {120 210 330 25} type {Horz Knob} box GTK_DOWN_BOX align 5 minimum -126 maximum 126 step 1
       }
       Fl_Value_Slider sl_periodendauer {
         label {Periodendauer [s]}
         callback {myBrautomat->set_period_set_point(5*sl_periodendauer->value());}
-        xywh {120 255 330 20} type {Horz Knob} align 5 minimum 2 maximum 50 step 0.2 value 10
+        xywh {120 255 330 20} type {Horz Knob} box GTK_DOWN_BOX align 5 minimum 2 maximum 50 step 0.2 value 10
       }
       Fl_Button {} {
         label {Motor aus}
@@ -77,7 +77,7 @@ for (double k = start; fabs(k)>=fabs(step); k+=step)
 
 sl_amplitude->value(0);
 myBrautomat->set_amplitude_set_point(0);}
-        xywh {476 207 90 30}
+        xywh {476 207 90 30} box GTK_UP_BOX down_box GTK_DOWN_BOX
       }
     }
     Fl_Group {} {
@@ -88,27 +88,27 @@ myBrautomat->set_amplitude_set_point(0);}
         label Hand
         callback {myBrautomat->set_heater(0);
 myBrautomat->set_temperature_mode(0);}
-        xywh {20 35 65 30} type Radio value 1
+        xywh {20 35 65 30} type Radio box GTK_UP_BOX down_box GTK_DOWN_BOX value 1
       }
       Fl_Light_Button {} {
         label Auto
         callback {myBrautomat->set_temperature_mode(1);}
-        xywh {20 95 65 30} type Radio
+        xywh {20 95 65 30} type Radio box GTK_UP_BOX down_box GTK_DOWN_BOX
       }
       Fl_Button {} {
         label Ein
         callback {myBrautomat->set_heater(1);}
-        xywh {124 35 40 30}
+        xywh {124 35 40 30} box GTK_UP_BOX down_box GTK_DOWN_BOX
       }
       Fl_Button {} {
         label Aus
         callback {myBrautomat->set_heater(0);}
-        xywh {169 35 40 30}
+        xywh {169 35 40 30} box GTK_UP_BOX down_box GTK_DOWN_BOX
       }
       Fl_Value_Slider sl_temperatur {
         label Solltemperatur
         callback {myBrautomat->set_temperature(sl_temperatur->value());}
-        xywh {125 90 259 25} type {Horz Knob} align 5 minimum 15 maximum 99.5 step 0.5 value 20
+        xywh {125 90 259 25} type {Horz Knob} box GTK_DOWN_BOX align 5 minimum 15 maximum 99.5 step 0.5 value 20
       }
       Fl_Check_Button cb_temp_from_profile {
         label {Sollwert aus Temperaturprofil}
@@ -134,11 +134,11 @@ myBrautomat->set_temperature_mode(0);}
       }
     }
     Fl_Group {} {
-      label Temperaturprofil open selected
+      label Temperaturprofil open
       xywh {10 320 580 465} box GTK_UP_BOX align 5
     } {
       Fl_Table temp_profile {
-        label Schrittparameter open
+        label Schrittparameter open selected
         xywh {30 465 405 305} align 5
         class Spreadsheet
       } {}
@@ -153,12 +153,12 @@ myBrautomat->set_temperature_mode(0);}
       Fl_Button {} {
         label {Schritt vor}
         callback {myBrautomat->next_step(o->value());}
-        xywh {320 340 115 30} when 1
+        xywh {320 340 115 30} box GTK_UP_BOX down_box GTK_DOWN_BOX when 1
       }
       Fl_Button {} {
         label {Schritt zurück}
         callback {myBrautomat->previous_step(o->value());}
-        xywh {320 370 115 30} when 1
+        xywh {320 370 115 30} box GTK_UP_BOX down_box GTK_DOWN_BOX when 1
       }
       Fl_Button {} {
         label {übernehmen}
@@ -169,7 +169,7 @@ myBrautomat->set_temperature_mode(0);}
   	temp_profile->get_value(k, 1),
   	temp_profile->get_value(k, 2));
 }}
-        xywh {460 585 105 40}
+        xywh {460 585 105 40} box GTK_UP_BOX down_box GTK_DOWN_BOX
       }
       Fl_Value_Input vi_time_offset {
         label {Schritt verlängern [s]}
@@ -178,7 +178,7 @@ myBrautomat->set_temperature_mode(0);}
       Fl_Button {} {
         label {verlängern}
         callback {myBrautomat->add_to_remaining_step_time(vi_time_offset->value());}
-        xywh {320 413 115 30}
+        xywh {320 413 115 30} box GTK_UP_BOX down_box GTK_DOWN_BOX
       }
     }
   }

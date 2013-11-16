@@ -7,7 +7,9 @@
 #d = load("efbe_schott_wasserkocher.log");
 
 ## 12l Wasser, erster Test am 5.11.2013
-d = load("Wasser12l.log");
+#d = load("Wasser12l.log");
+
+d = load("cBrautomat_status.log");
 
 t = d(:,1)+d(:,2)/1e6;
 t -= t(1);
@@ -23,5 +25,5 @@ xlabel("Zeit [s]");
 ylabel("Temperatur [C]");
 legend("location","east")
 
-title("Test Nr.1 mit 12l Wasser")
-print("test1_12l_wasser.png")
+#title("Test Nr.1 mit 12l Wasser")
+#print("test1_12l_wasser.png")
