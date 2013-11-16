@@ -8,6 +8,7 @@ MCU = atmega32
 FORMAT = ihex
 TARGET = main
 SRC =    $(TARGET).c lcd.c uart.c crc8.c ds18x20.c onewire.c uart_addon.c
+#SRC =    $(TARGET).c uart.c crc8.c ds18x20.c onewire.c uart_addon.c
 ASRC =
 OPT = 2
 

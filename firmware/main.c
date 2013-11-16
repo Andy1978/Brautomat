@@ -59,6 +59,8 @@
 
 **************************************************/
 
+#define USE_LCD
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -66,7 +68,9 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <util/delay.h>
+#ifdef USE_LCD
 #include "lcd.h"
+#endif
 #include "uart.h"
 #include "onewire.h"
 #include "ds18x20.h"
@@ -127,6 +131,7 @@ uint8_t gSensorID[OW_ROMCODE_SIZE]={ 0x5A, 0xF2, 0xBD, 0x04};
 // printf("%.4f,",sin(p)*4)
 float sin_list[]={0.0000,0.3921,0.7804,1.1611,1.5307,1.8856,2.2223,2.5376,2.8284,3.0920,3.3259,3.5277,3.6955,3.8278,3.9231,3.9807,4.0000,3.9807,3.9231,3.8278,3.6955,3.5277,3.3259,3.0920,2.8284,2.5376,2.2223,1.8856,1.5307,1.1611,0.7804,0.3921,0.0000,-0.3921,-0.7804,-1.1611,-1.5307,-1.8856,-2.2223,-2.5376,-2.8284,-3.0920,-3.3259,-3.5277,-3.6955,-3.8278,-3.9231,-3.9807,-4.0000,-3.9807,-3.9231,-3.8278,-3.6955,-3.5277,-3.3259,-3.0920,-2.8284,-2.5376,-2.2223,-1.8856,-1.5307,-1.1611,-0.7804,-0.3921};
 
+#ifdef USE_LCD
 //  Integer (Basis 10) rechtsbündig auf LCD ausgeben.
 void lcd_put_int(int16_t val, uint8_t len)
 {
@@ -193,7 +198,7 @@ void update_lcd(void)
 */
 
 }
-
+#endif
 //ISR(TIMER0_COMP_vect, ISR_NOBLOCK) //1kHz
 ISR(TIMER0_COMP_vect) //1kHz
 {
@@ -385,6 +390,7 @@ int main(void)
 {
   //uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(UART_BAUD_RATE,F_CPU));
   uart_init(UART_BAUD_SELECT(UART_BAUD_RATE,F_CPU));
+#ifdef USE_LCD
   lcd_init(LCD_DISP_ON);
   lcd_clrscr();
   lcd_puts_P("Brautomat v0.6\n");
@@ -392,9 +398,10 @@ int main(void)
   lcd_puts_P(__DATE__" aw");
 
   //3s Delay for Splash
-  for(uint8_t i=0;i<60;++i)
+  for(uint8_t i=0;i<200;++i)
     _delay_ms(15);
   lcd_clrscr();
+#endif
 
   //H-Brücke
   DDRD |= _BV(PD2) | _BV(PD4) | _BV(PD5) | _BV(PD6) | _BV(PD7);
@@ -452,11 +459,13 @@ int main(void)
         DS18X20_start_meas( DS18X20_POWER_EXTERN, NULL );
         do_ds18b20_meas = 0;
       }
+#ifdef USE_LCD
       if(do_update_lcd)
       {
         update_lcd();
         do_update_lcd=0;
       }
+#endif
     }
     return 0;
 }
