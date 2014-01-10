@@ -1,9 +1,17 @@
 Brautomat - der (Bier)brau(au)tomat
 
 Funktionen:
-  * Ansteuerung des Rührwegs mit fester Drehzahl oder Sinusmodulation
-  * Temperaturregelung entlang des konfigurierbaren Profils
-  * TODO: please fill me!
+  * Ansteuerung des Rührwerks mit konstanter Drehzahl oder Sinusmodulation für maximale Durchmischung
+  * Temperaturregelung entlang des konfigurierbaren Profils.
 
-Schaltplände finden sich in /Dokumentation, CAD Zeichnungen kommen noch dazu.
-Bilder finden sich auf dem dazugehörigen Wiki: TODO: verlinken
+Schaltplände und Stückliste finden sich in /Dokumentation, CAD Zeichnungen kommen noch dazu.
+Als  Basis dient YAAMB https://github.com/YAAMB/YAAMB
+
+Bilder finden sich im wiki https://github.com/Andy1978/Brautomat/wiki
+
+ToDo:
+  * Wiki strukturieren, Bilder vom Brauprozess
+  * CAD Zeichnungen hinzufügen
+  * Identifikation der Streckenparameter, siehe playground
+  * 2 Punkt Regler in der Software durch quasi kontinuierlichen Regler mit PWM Modulation ersetzen, P oder PI Regler verwenden
+  * Neue monolithische Platine mit den wichtigen Komponenten und günstigerer USB<->serial Wandler
