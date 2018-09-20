@@ -46,7 +46,7 @@ function ret = delta(X, t, T_ist, heater)
   yo+=T_ist(1);
   #keyboard
   ret=sumsq(yo-T_ist');
-  
+
 endfunction
 
 f = @(X) delta(X, ti, T_ist_i, state_heater_i)
